@@ -105,8 +105,8 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
-        onShowToast('ছবির সাইজ ২MB এর বেশি হতে পারবে না', 'error');
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        onShowToast('ছবির সাইজ ৫MB এর বেশি হতে পারবে না', 'error');
         return;
       }
       const reader = new FileReader();
@@ -141,7 +141,7 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
       const result = await generateWritingAssistance(task === 'ideas' ? title : '', content, task);
       if (task === 'grammar' || task === 'expand') setContent(prev => prev + '\n\n' + result);
       else if (task === 'ideas') setContent(prev => prev + '\n\n--- আইডিয়া সমূহ ---\n' + result);
-      else if (task === 'summarize') alert('সারসংক্ষেপ:\n' + result); // Could use a modal here
+      else if (task === 'summarize') alert('সারসংক্ষেপ:\n' + result); 
       onShowToast('এআই জেনারেশন সম্পন্ন হয়েছে', 'success');
     } catch (error) {
       onShowToast('এআই সেবা সংযোগে সমস্যা হচ্ছে', 'error');

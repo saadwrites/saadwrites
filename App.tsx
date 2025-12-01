@@ -8,8 +8,9 @@ import { About } from './components/About';
 import { Insight } from './components/Insight';
 import { Login } from './components/Login';
 import { Article, ViewState, Comment, Toast, ToastType, User } from './types';
+import { subscribeToArticles, saveArticleToFirebase, deleteArticleFromFirebase, logoutUser, subscribeToAuthChanges } from './services/firebaseService';
 
-// Initial dummy data
+// Initial dummy data for fallback
 const INITIAL_ARTICLES: Article[] = [
   {
     id: '1',
@@ -22,40 +23,14 @@ const INITIAL_ARTICLES: Article[] = [
     comments: [],
     status: 'published',
     views: 124
-  },
-  {
-    id: '2',
-    title: 'প্রযুক্তি ও আমাদের জীবন',
-    content: `বর্তমান যুগ প্রযুক্তির যুগ। সকালের অ্যালার্ম থেকে শুরু করে রাতে ঘুমানোর আগে সোশ্যাল মিডিয়া স্ক্রলিং – আমাদের জীবনের প্রতিটি মুহূর্ত এখন প্রযুক্তির সাথে জড়িয়ে আছে। কিন্তু এই অতি প্রযুক্তি নির্ভরতা কি আমাদের যান্ত্রিক করে তুলছে না?`,
-    createdAt: Date.now() - 86400000 * 5,
-    tags: ['প্রযুক্তি', 'জীবন', 'ভাবনা'],
-    category: 'প্রবন্ধ',
-    coverImage: 'https://picsum.photos/800/400?random=2',
-    comments: [],
-    status: 'published',
-    views: 89
   }
 ];
 
 export default function App() {
   const [view, setView] = useState<ViewState>(ViewState.HOME);
-  const [articles, setArticles] = useState<Article[]>(() => {
-    const saved = localStorage.getItem('lekhoni_articles');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Data Migration: Ensure 'status' and 'views' exist
-        return parsed.map((a: any) => ({
-          ...a,
-          status: a.status || 'published',
-          views: a.views || 0
-        }));
-      } catch (e) {
-        return INITIAL_ARTICLES;
-      }
-    }
-    return INITIAL_ARTICLES;
-  });
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [isLoadingArticles, setIsLoadingArticles] = useState(true);
+  
   const [activeArticle, setActiveArticle] = useState<Article | null>(null);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -73,10 +48,7 @@ export default function App() {
   });
 
   // User Auth State
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('saadwrites_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // Toasts State
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -91,9 +63,48 @@ export default function App() {
     return 'light';
   });
 
+  // Firebase Subscriptions
   useEffect(() => {
-    localStorage.setItem('lekhoni_articles', JSON.stringify(articles));
-  }, [articles]);
+    // Auth Subscription
+    const unsubscribeAuth = subscribeToAuthChanges((user) => {
+      setCurrentUser(user);
+    });
+
+    // Articles Subscription
+    const unsubscribeArticles = subscribeToArticles((fetchedArticles) => {
+      setArticles(fetchedArticles);
+      setIsLoadingArticles(false);
+
+      // Data Migration: Check if we have local articles but remote is empty (first sync)
+      // Or just a one-time migration check
+      const localData = localStorage.getItem('lekhoni_articles');
+      if (localData && fetchedArticles.length === 0) {
+        try {
+          const parsed = JSON.parse(localData) as Article[];
+          if (parsed.length > 0) {
+            console.log("Migrating local data to Firebase...");
+            parsed.forEach(async (article) => {
+              await saveArticleToFirebase({
+                ...article,
+                status: article.status || 'published',
+                views: article.views || 0
+              });
+            });
+            // Clear local to avoid re-migration
+            localStorage.removeItem('lekhoni_articles');
+            addToast('লোকাল ডাটা ক্লাউডে আপলোড করা হয়েছে', 'success');
+          }
+        } catch (e) {
+          console.error("Migration failed", e);
+        }
+      }
+    });
+
+    return () => {
+      unsubscribeAuth();
+      unsubscribeArticles();
+    };
+  }, []);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -105,7 +116,7 @@ export default function App() {
     localStorage.setItem('saadwrites_theme', theme);
   }, [theme]);
 
-  // Persist total visits
+  // Persist total visits locally (simplification, real analytics should be in DB)
   useEffect(() => {
     localStorage.setItem('saadwrites_visits', totalVisits.toString());
   }, [totalVisits]);
@@ -114,15 +125,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('saadwrites_admin', JSON.stringify(isAdmin));
   }, [isAdmin]);
-
-  // Persist User state
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('saadwrites_user', JSON.stringify(currentUser));
-    } else {
-      localStorage.removeItem('saadwrites_user');
-    }
-  }, [currentUser]);
 
   const toggleAdmin = () => {
     setIsAdmin(prev => {
@@ -136,14 +138,18 @@ export default function App() {
   };
 
   const handleLogin = (user: User) => {
-    setCurrentUser(user);
+    // State update handled by subscription
     addToast(`স্বাগতম, ${user.name}!`, 'success');
     setView(ViewState.HOME);
   };
 
-  const handleLogout = () => {
-    setCurrentUser(null);
-    addToast('লগআউট সফল হয়েছে', 'info');
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      addToast('লগআউট সফল হয়েছে', 'info');
+    } catch (e) {
+      addToast('লগআউট করতে সমস্যা হয়েছে', 'error');
+    }
   };
 
   const addToast = (message: string, type: ToastType = 'info') => {
@@ -189,9 +195,11 @@ export default function App() {
           if (event.target?.result) {
             const parsedData = JSON.parse(event.target.result as string);
             if (Array.isArray(parsedData)) {
-              if (window.confirm('আপনি কি বর্তমান ডাটা রিপ্লেস করে ব্যাকআপ রিস্টোর করতে চান?')) {
-                setArticles(parsedData);
-                addToast('ডাটা রিস্টোর সফল হয়েছে', 'success');
+              if (window.confirm('আপনি কি এই ডাটা ফায়ারবেসে ইমপোর্ট করতে চান?')) {
+                parsedData.forEach(async (article) => {
+                  await saveArticleToFirebase(article);
+                });
+                addToast('ডাটা ইমপোর্ট সফল হয়েছে', 'success');
                 setView(ViewState.HOME);
               }
             } else {
@@ -205,44 +213,49 @@ export default function App() {
     }
   };
 
-  const handleSaveArticle = (articleData: Article) => {
-    if (editingArticle) {
-      const updatedArticles = articles.map(a => 
-        a.id === articleData.id ? { ...articleData, views: a.views || 0 } : a
-      );
-      setArticles(updatedArticles);
+  const handleSaveArticle = async (articleData: Article) => {
+    try {
+      await saveArticleToFirebase({
+        ...articleData,
+        views: articleData.views || 0 // Ensure views are preserved or init
+      });
+      
       setEditingArticle(null);
-      addToast('লেখা আপডেট করা হয়েছে', 'success');
-    } else {
-      setArticles([{ ...articleData, views: 0 }, ...articles]);
-      addToast('নতুন লেখা সেভ হয়েছে', 'success');
+      addToast('লেখা ক্লাউডে সেভ হয়েছে', 'success');
+      
+      // Clear session draft
+      localStorage.removeItem('saadwrites_draft_content');
+      localStorage.removeItem('saadwrites_draft_title');
+      setView(ViewState.HOME);
+    } catch (e) {
+      console.error(e);
+      addToast('সেভ করতে সমস্যা হয়েছে', 'error');
     }
-    // Clear session draft
-    localStorage.removeItem('saadwrites_draft_content');
-    localStorage.removeItem('saadwrites_draft_title');
-    setView(ViewState.HOME);
   };
 
-  const handleSelectArticle = (article: Article) => {
-    // Increment view counts
-    const updatedArticles = articles.map(a => 
-      a.id === article.id ? { ...a, views: (a.views || 0) + 1 } : a
-    );
-    setArticles(updatedArticles);
+  const handleSelectArticle = async (article: Article) => {
+    // Increment view counts locally and remotely
+    const newViews = (article.views || 0) + 1;
     setTotalVisits(prev => prev + 1);
     
+    // Fire and forget update
+    saveArticleToFirebase({ ...article, views: newViews }).catch(e => console.error(e));
+    
     // Update local state for immediate feedback
-    setActiveArticle({ ...article, views: (article.views || 0) + 1 });
+    setActiveArticle({ ...article, views: newViews });
     setView(ViewState.READER);
     window.scrollTo(0,0);
   };
 
-  const handleDeleteArticle = (articleId: string) => {
-    const updatedArticles = articles.filter(a => a.id !== articleId);
-    setArticles(updatedArticles);
-    setActiveArticle(null);
-    setView(ViewState.HOME);
-    addToast('লেখা মুছে ফেলা হয়েছে', 'success');
+  const handleDeleteArticle = async (articleId: string) => {
+    try {
+      await deleteArticleFromFirebase(articleId);
+      setActiveArticle(null);
+      setView(ViewState.HOME);
+      addToast('লেখা মুছে ফেলা হয়েছে', 'success');
+    } catch (e) {
+      addToast('মুছতে সমস্যা হয়েছে', 'error');
+    }
   };
 
   const handleEditArticle = (article: Article) => {
@@ -250,7 +263,10 @@ export default function App() {
     setView(ViewState.EDITOR);
   };
 
-  const handleAddComment = (articleId: string, commentData: { author: string; content: string; authorId?: string; authorAvatar?: string }) => {
+  const handleAddComment = async (articleId: string, commentData: { author: string; content: string; authorId?: string; authorAvatar?: string }) => {
+    const article = articles.find(a => a.id === articleId);
+    if (!article) return;
+
     const newComment: Comment = {
       id: Date.now().toString(),
       author: commentData.author,
@@ -259,23 +275,17 @@ export default function App() {
       authorId: commentData.authorId,
       authorAvatar: commentData.authorAvatar
     };
-    const updatedArticles = articles.map(article => {
-      if (article.id === articleId) {
-        return {
-          ...article,
-          comments: [...(article.comments || []), newComment]
-        };
+
+    const updatedComments = [...(article.comments || []), newComment];
+    try {
+      await saveArticleToFirebase({ ...article, comments: updatedComments });
+      if (activeArticle && activeArticle.id === articleId) {
+        setActiveArticle({ ...activeArticle, comments: updatedComments });
       }
-      return article;
-    });
-    setArticles(updatedArticles);
-    if (activeArticle && activeArticle.id === articleId) {
-      setActiveArticle({
-        ...activeArticle,
-        comments: [...(activeArticle.comments || []), newComment]
-      });
+      addToast('মন্তব্য প্রকাশ করা হয়েছে', 'success');
+    } catch (e) {
+      addToast('মন্তব্য সেভ করতে সমস্যা হয়েছে', 'error');
     }
-    addToast('মন্তব্য প্রকাশ করা হয়েছে', 'success');
   };
 
   const handleTagClick = (tag: string) => {
@@ -285,6 +295,10 @@ export default function App() {
   };
 
   const renderContent = () => {
+    if (isLoadingArticles) {
+      return <div className="flex h-screen items-center justify-center text-gold font-kalpurush text-xl">লোড হচ্ছে...</div>;
+    }
+
     switch (view) {
       case ViewState.EDITOR:
         return isAdmin ? (
