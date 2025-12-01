@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, Sparkles, RefreshCw, AlignLeft, Type, Plus, Image as ImageIcon, X, Bold, Italic, Underline, List, FolderOpen, FileText } from 'lucide-react';
+import { Save, Sparkles, Image as ImageIcon, X, Bold, Italic, List, FolderOpen, FileText } from 'lucide-react';
 import { generateWritingAssistance } from '../services/geminiService';
 import { Article, ArticleCategory } from '../types';
 
@@ -22,10 +22,11 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Initialize categories
   useEffect(() => {
     const defaults = ['গল্প', 'কবিতা', 'প্রবন্ধ', 'অন্যান্য'];
-    const merged = Array.from(new Set([...defaults, ...existingCategories, ...availableCategories]));
-    setAvailableCategories(merged);
+    const merged = Array.from(new Set([...defaults, ...existingCategories]));
+    setAvailableCategories(prev => Array.from(new Set([...prev, ...merged])));
   }, [existingCategories]);
 
   useEffect(() => {
@@ -66,21 +67,19 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
     onSave(article);
   };
 
-  const handleAddCategory = () => {
-    const newCat = prompt('নতুন ক্যাটাগরির নাম লিখুন:');
-    if (newCat && newCat.trim()) {
-      const trimmedCat = newCat.trim();
-      if (!availableCategories.includes(trimmedCat)) {
-        setAvailableCategories([...availableCategories, trimmedCat]);
-      }
-      setCategory(trimmedCat);
-    }
-  };
-
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     if (value === '__NEW__') {
-      handleAddCategory();
+      const newCat = prompt('নতুন ক্যাটাগরির নাম লিখুন:');
+      if (newCat && newCat.trim()) {
+        const trimmedCat = newCat.trim();
+        setAvailableCategories(prev => [...prev, trimmedCat]);
+        setCategory(trimmedCat);
+      }
+      // If user cancels prompt, we don't change category (stays on previous)
+      // or we could force it to a default. For now, staying on previous is fine
+      // but the select element might show "+ নতুন" visually if we don't force re-render.
+      // React state 'category' will ensure the value is correct on re-render.
     } else {
       setCategory(value);
     }
@@ -200,7 +199,7 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
               className="bg-transparent border-none text-xs font-bold uppercase tracking-wider text-charcoal dark:text-stone-300 focus:ring-0 cursor-pointer p-0 pr-6 focus:outline-none"
             >
               {availableCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-              <option value="__NEW__" className="text-gold">+ নতুন</option>
+              <option value="__NEW__" className="text-gold font-bold">+ নতুন</option>
             </select>
           </div>
 
