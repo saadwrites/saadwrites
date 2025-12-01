@@ -55,36 +55,6 @@ export const ArticleList: React.FC<ArticleListProps> = ({ articles, onSelectArti
     }
   };
 
-  if (articles.length === 0) {
-    return (
-      <div className="text-center py-20 animate-fade-in relative">
-        {/* Top bar even when empty */}
-        <div className="absolute top-0 right-0 p-4">
-           <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors shadow-sm border border-stone-200 dark:border-stone-700"
-            title={theme === 'light' ? 'ডার্ক মোড' : 'লাইট মোড'}
-          >
-            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-          </button>
-        </div>
-
-        <div className="mb-6 inline-block p-4 rounded-full bg-stone-100 dark:bg-stone-800 mt-10">
-          <div className="w-16 h-1 bg-stone-300 dark:bg-stone-600 rounded-full mb-2 mx-auto"></div>
-          <div className="w-12 h-1 bg-stone-300 dark:bg-stone-600 rounded-full mx-auto"></div>
-        </div>
-        <h3 className="text-2xl font-hind font-bold text-stone-800 dark:text-stone-100 mb-2">এখনো কোনো লেখা নেই</h3>
-        <p className="text-stone-500 dark:text-stone-400 mb-8">আপনার চিন্তাভাবনা সবার সাথে শেয়ার করতে আজই লেখা শুরু করুন।</p>
-        <button 
-          onClick={onNewArticle}
-          className="px-6 py-3 bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 rounded-lg hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors shadow-md font-medium"
-        >
-          প্রথম লেখা লিখুন
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="text-center mb-8">
@@ -108,7 +78,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({ articles, onSelectArti
           
           <button
             onClick={toggleTheme}
-            className="p-2.5 rounded-full bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors shadow-sm border border-stone-200 dark:border-stone-700"
+            className="p-2.5 rounded-full bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors shadow-sm border border-stone-200 dark:border-stone-700 flex-shrink-0"
             title={theme === 'light' ? 'ডার্ক মোড' : 'লাইট মোড'}
           >
             {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
@@ -133,58 +103,74 @@ export const ArticleList: React.FC<ArticleListProps> = ({ articles, onSelectArti
         </div>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2">
-        {filteredArticles.length > 0 ? (
-          filteredArticles.map((article) => (
-            <div 
-              key={article.id} 
-              onClick={() => onSelectArticle(article)}
-              className="group cursor-pointer bg-white dark:bg-stone-800 rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full"
-            >
-              {article.coverImage && (
-                <div className="h-48 overflow-hidden relative">
-                  <img 
-                    src={article.coverImage} 
-                    alt={article.title} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-4 right-4 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-stone-800 dark:text-stone-100 flex items-center gap-1 shadow-sm">
-                    {getCategoryIcon(article.category)}
-                    {article.category}
+      {articles.length === 0 ? (
+        <div className="text-center py-20 animate-fade-in">
+          <div className="mb-6 inline-block p-4 rounded-full bg-stone-100 dark:bg-stone-800 mt-10">
+            <div className="w-16 h-1 bg-stone-300 dark:bg-stone-600 rounded-full mb-2 mx-auto"></div>
+            <div className="w-12 h-1 bg-stone-300 dark:bg-stone-600 rounded-full mx-auto"></div>
+          </div>
+          <h3 className="text-2xl font-hind font-bold text-stone-800 dark:text-stone-100 mb-2">এখনো কোনো লেখা নেই</h3>
+          <p className="text-stone-500 dark:text-stone-400 mb-8">আপনার চিন্তাভাবনা সবার সাথে শেয়ার করতে আজই লেখা শুরু করুন।</p>
+          <button 
+            onClick={onNewArticle}
+            className="px-6 py-3 bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 rounded-lg hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors shadow-md font-medium"
+          >
+            প্রথম লেখা লিখুন
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2">
+          {filteredArticles.length > 0 ? (
+            filteredArticles.map((article) => (
+              <div 
+                key={article.id} 
+                onClick={() => onSelectArticle(article)}
+                className="group cursor-pointer bg-white dark:bg-stone-800 rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full"
+              >
+                {article.coverImage && (
+                  <div className="h-48 overflow-hidden relative">
+                    <img 
+                      src={article.coverImage} 
+                      alt={article.title} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-4 right-4 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-stone-800 dark:text-stone-100 flex items-center gap-1 shadow-sm">
+                      {getCategoryIcon(article.category)}
+                      {article.category}
+                    </div>
                   </div>
-                </div>
-              )}
-              <div className="p-6 flex flex-col flex-grow">
-                <div className="flex justify-between items-center mb-3">
-                  <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400">
-                    <Clock className="w-3 h-3" />
-                    <span>{formatDate(article.createdAt)}</span>
+                )}
+                <div className="p-6 flex flex-col flex-grow">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400">
+                      <Clock className="w-3 h-3" />
+                      <span>{formatDate(article.createdAt)}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded-full">
+                      <Hourglass className="w-3 h-3" />
+                      <span>{calculateReadingTime(article.content)}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded-full">
-                    <Hourglass className="w-3 h-3" />
-                    <span>{calculateReadingTime(article.content)}</span>
+                  
+                  <h3 className="text-xl font-hind font-bold text-stone-800 dark:text-stone-100 mb-3 line-clamp-2 group-hover:text-accent transition-colors">
+                    {article.title}
+                  </h3>
+                  <p className="text-stone-600 dark:text-stone-400 line-clamp-3 text-sm leading-relaxed mb-4 font-serif flex-grow">
+                    {article.content.replace(/(\*\*|__|[*])/g, '').substring(0, 150)}...
+                  </p>
+                  <div className="flex items-center text-accent text-sm font-medium pt-4 border-t border-stone-100 dark:border-stone-700">
+                    পড়তে থাকুন <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                   </div>
-                </div>
-                
-                <h3 className="text-xl font-hind font-bold text-stone-800 dark:text-stone-100 mb-3 line-clamp-2 group-hover:text-accent transition-colors">
-                  {article.title}
-                </h3>
-                {/* Just taking a rough slice, formatting chars might remain but it's just a preview */}
-                <p className="text-stone-600 dark:text-stone-400 line-clamp-3 text-sm leading-relaxed mb-4 font-serif flex-grow">
-                  {article.content.replace(/(\*\*|__|[*])/g, '').substring(0, 150)}...
-                </p>
-                <div className="flex items-center text-accent text-sm font-medium pt-4 border-t border-stone-100 dark:border-stone-700">
-                  পড়তে থাকুন <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12 text-stone-400">
+              {searchQuery ? 'দুঃখিত, আপনার অনুসন্ধানের সাথে কোনো লেখা পাওয়া যায়নি।' : 'এই ক্যাটাগরিতে কোনো লেখা পাওয়া যায়নি।'}
             </div>
-          ))
-        ) : (
-          <div className="col-span-full text-center py-12 text-stone-400">
-             {searchQuery ? 'দুঃখিত, আপনার অনুসন্ধানের সাথে কোনো লেখা পাওয়া যায়নি।' : 'এই ক্যাটাগরিতে কোনো লেখা পাওয়া যায়নি।'}
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -2,7 +2,7 @@
 <html lang="bn">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>saadwrites - ব্যক্তিগত ব্লগ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@300;400;500;600;700&family=Hind+Siliguri:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Noto+Serif+Bengali:wght@400;500;600;700&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
@@ -28,6 +28,12 @@
       }
     </script>
     <style>
+      html, body {
+        height: 100%;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+      }
       body {
         background-color: #fdfbf7;
         color: #2d2d2d;
@@ -35,6 +41,15 @@
       .dark body {
         background-color: #1a1a1a;
         color: #e5e5e5;
+      }
+      /* Hide scrollbar for Chrome, Safari and Opera */
+      .no-scrollbar::-webkit-scrollbar {
+          display: none;
+      }
+      /* Hide scrollbar for IE, Edge and Firefox */
+      .no-scrollbar {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
       }
     </style>
   <script type="importmap">

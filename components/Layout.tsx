@@ -55,7 +55,8 @@ export const Layout: React.FC<LayoutProps> = ({
   };
 
   return (
-    <div className="h-screen bg-paper text-ink font-sans flex transition-colors duration-300 overflow-hidden">
+    // Main Container: Fixed height (100dvh for mobile address bar support), hidden overflow to prevent body scroll
+    <div className="h-[100dvh] w-full bg-paper text-ink font-sans flex transition-colors duration-300 overflow-hidden relative">
       
       {/* Floating Toggle Button (Visible when sidebar is closed or on mobile) */}
       <button
@@ -77,19 +78,19 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* Sidebar Navigation */}
       <aside 
         className={`
-          fixed md:relative h-full z-[50]
+          flex-shrink-0 z-[50] h-full
           bg-white/95 dark:bg-stone-900/95 backdrop-blur-md
           border-r border-stone-200 dark:border-stone-800 
           flex flex-col transition-all duration-300 ease-in-out
+          ${isMobile ? 'fixed inset-y-0 left-0' : 'relative'}
           ${isSidebarOpen 
             ? 'translate-x-0 w-72 shadow-2xl md:shadow-none' 
             : '-translate-x-full md:translate-x-0 md:w-0 md:border-none md:overflow-hidden'}
         `}
       >
-        {/* Sidebar Header */}
+        {/* Sidebar Header - Sticky/Fixed within sidebar */}
         <div className="p-6 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between whitespace-nowrap overflow-hidden flex-shrink-0">
           <div className="flex items-center gap-3">
-             {/* Logo Icon Place holder or simple text */}
             <h1 className="text-2xl font-bold font-serif tracking-tight text-stone-800 dark:text-stone-100 pl-1">saadwrites</h1>
           </div>
           <button 
@@ -101,7 +102,7 @@ export const Layout: React.FC<LayoutProps> = ({
           </button>
         </div>
 
-        {/* Navigation Items */}
+        {/* Navigation Items - Scrollable area */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden whitespace-nowrap">
           <button
             onClick={() => handleNavClick(ViewState.HOME)}
@@ -182,7 +183,7 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </nav>
 
-        {/* Footer */}
+        {/* Footer - Fixed at bottom of sidebar */}
         <div className="p-6 border-t border-stone-200 dark:border-stone-800 whitespace-nowrap overflow-hidden flex-shrink-0">
           <p className="text-xs text-stone-400 text-center truncate">
             &copy; {new Date().getFullYear()} saadwrites
@@ -190,9 +191,9 @@ export const Layout: React.FC<LayoutProps> = ({
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 h-full overflow-y-auto bg-paper dark:bg-[#1a1a1a] transition-colors duration-300 w-full min-w-0 relative">
-        {/* Content container with padding adjustment for mobile header space if needed */}
+      {/* Main Content Area - Scrollable independently */}
+      <main className="flex-1 h-full overflow-y-auto bg-paper dark:bg-[#1a1a1a] transition-colors duration-300 w-full min-w-0 relative scroll-smooth">
+        {/* Content container */}
         <div className="max-w-4xl mx-auto p-4 md:p-8 lg:p-12 pt-20 md:pt-12">
           {children}
         </div>
