@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PenTool, BookOpen, Mail, Download, Upload, User, Menu, X, PanelLeftClose } from 'lucide-react';
-import { ViewState } from '../types';
+import { PenTool, BookOpen, Mail, Download, Upload, User as UserIcon, Menu, X, PanelLeftClose, Eye, CheckCircle, AlertCircle, Info, Lock, Unlock, BarChart2, LogIn, LogOut } from 'lucide-react';
+import { ViewState, Toast, User } from '../types';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,6 +10,13 @@ interface LayoutProps {
   toggleTheme: () => void;
   onExportData: () => void;
   onImportData: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  totalVisits: number;
+  toasts: Toast[];
+  removeToast: (id: string) => void;
+  isAdmin: boolean;
+  toggleAdmin: () => void;
+  user: User | null;
+  onLogout: () => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ 
@@ -19,7 +26,14 @@ export const Layout: React.FC<LayoutProps> = ({
   theme, 
   toggleTheme,
   onExportData,
-  onImportData
+  onImportData,
+  totalVisits,
+  toasts,
+  removeToast,
+  isAdmin,
+  toggleAdmin,
+  user,
+  onLogout
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -55,6 +69,26 @@ export const Layout: React.FC<LayoutProps> = ({
   return (
     <div className="h-[100dvh] w-full bg-cream dark:bg-[#0f0f0f] text-charcoal dark:text-stone-200 font-sans flex transition-colors duration-500 overflow-hidden relative">
       
+      {/* Toast Container */}
+      <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
+        {toasts.map(toast => (
+          <div 
+            key={toast.id}
+            className={`pointer-events-auto flex items-center gap-3 px-6 py-4 rounded-lg shadow-2xl animate-slide-up min-w-[300px] border-l-4 ${
+              toast.type === 'success' ? 'bg-white dark:bg-stone-900 border-green-500 text-charcoal dark:text-white' :
+              toast.type === 'error' ? 'bg-white dark:bg-stone-900 border-red-500 text-charcoal dark:text-white' :
+              'bg-charcoal text-white border-gold'
+            }`}
+          >
+            {toast.type === 'success' && <CheckCircle className="w-5 h-5 text-green-500" />}
+            {toast.type === 'error' && <AlertCircle className="w-5 h-5 text-red-500" />}
+            {toast.type === 'info' && <Info className="w-5 h-5 text-gold" />}
+            <p className="text-sm font-bold font-sans">{toast.message}</p>
+            <button onClick={() => removeToast(toast.id)} className="ml-auto text-stone-400 hover:text-charcoal dark:hover:text-white"><X className="w-4 h-4" /></button>
+          </div>
+        ))}
+      </div>
+
       {/* Floating Toggle Button */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -72,7 +106,7 @@ export const Layout: React.FC<LayoutProps> = ({
         />
       )}
 
-      {/* Sidebar Navigation - Responsive Theme */}
+      {/* Sidebar Navigation */}
       <aside 
         className={`
           flex-shrink-0 z-[50] h-full
@@ -101,6 +135,17 @@ export const Layout: React.FC<LayoutProps> = ({
           </button>
         </div>
 
+        {/* User Profile Section (If Logged In) */}
+        {user && (
+          <div className="px-4 py-6 border-b border-stone-100 dark:border-stone-800 flex items-center gap-4 mx-2">
+            <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full border-2 border-gold shadow-sm object-cover" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-charcoal dark:text-white truncate">{user.name}</p>
+              <p className="text-[10px] text-stone-400 truncate">{user.email}</p>
+            </div>
+          </div>
+        )}
+
         {/* Navigation Items */}
         <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto overflow-x-hidden whitespace-nowrap scrollbar-hide">
           <NavButton 
@@ -111,16 +156,9 @@ export const Layout: React.FC<LayoutProps> = ({
             subLabel="আমার রচনাবলী"
           />
           <NavButton 
-            active={currentView === ViewState.EDITOR} 
-            onClick={() => handleNavClick(ViewState.EDITOR)} 
-            icon={<PenTool className="w-4 h-4" />} 
-            label="নুতন সৃষ্টি" 
-            subLabel="লেখা শুরু করুন"
-          />
-          <NavButton 
             active={currentView === ViewState.ABOUT} 
             onClick={() => handleNavClick(ViewState.ABOUT)} 
-            icon={<User className="w-4 h-4" />} 
+            icon={<UserIcon className="w-4 h-4" />} 
             label="লেখক পরিচিতি" 
             subLabel="আমার সম্পর্কে"
           />
@@ -132,42 +170,105 @@ export const Layout: React.FC<LayoutProps> = ({
             subLabel="বার্তা পাঠান"
           />
 
-          {/* Settings Section */}
-          <div className="pt-8 mt-8 border-t border-stone-100 dark:border-stone-800 mx-2">
-            <p className="px-4 text-[10px] font-bold text-stone-400 dark:text-stone-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-              সেটিংস
-            </p>
-            
-            <button
-              onClick={() => { onExportData(); if(isMobile) setIsSidebarOpen(false); }}
-              className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-300 group"
-            >
-              <Download className="w-4 h-4 shrink-0 group-hover:text-gold transition-colors" />
-              <span className="text-sm font-medium">ব্যাকআপ নিন</span>
-            </button>
+          {!user && !isAdmin && (
+             <NavButton 
+               active={currentView === ViewState.LOGIN} 
+               onClick={() => handleNavClick(ViewState.LOGIN)} 
+               icon={<LogIn className="w-4 h-4" />} 
+               label="লগইন" 
+               subLabel="যোগ দিন"
+             />
+          )}
 
+          {user && (
             <button
-              onClick={handleImportClick}
-              className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-300 group"
+              onClick={onLogout}
+              className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-stone-500 dark:text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all duration-300 group"
             >
-              <Upload className="w-4 h-4 shrink-0 group-hover:text-gold transition-colors" />
-              <span className="text-sm font-medium">রিস্টোর করুন</span>
+              <span className="p-2 rounded-md bg-stone-200 dark:bg-stone-900 group-hover:bg-red-100 dark:group-hover:bg-red-900/30 transition-colors">
+                <LogOut className="w-4 h-4" />
+              </span>
+              <div className="text-left">
+                <span className="block text-sm font-bold font-kalpurush tracking-wide group-hover:text-red-500">লগআউট</span>
+              </div>
             </button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={(e) => { onImportData(e); if(isMobile) setIsSidebarOpen(false); }} 
-              className="hidden" 
-              accept=".json"
-            />
-          </div>
+          )}
+
+          {isAdmin && (
+            <>
+              <div className="my-6 border-t border-stone-100 dark:border-stone-800 mx-2"></div>
+              
+              <NavButton 
+                active={currentView === ViewState.EDITOR} 
+                onClick={() => handleNavClick(ViewState.EDITOR)} 
+                icon={<PenTool className="w-4 h-4" />} 
+                label="নুতন সৃষ্টি" 
+                subLabel="লেখা শুরু করুন"
+              />
+              <NavButton 
+                active={currentView === ViewState.INSIGHT} 
+                onClick={() => handleNavClick(ViewState.INSIGHT)} 
+                icon={<BarChart2 className="w-4 h-4" />} 
+                label="ইনসাইট" 
+                subLabel="পরিসংখ্যান"
+              />
+
+              {/* Settings Section */}
+              <div className="pt-6 mt-6 border-t border-stone-100 dark:border-stone-800 mx-2">
+                <p className="px-4 text-[10px] font-bold text-stone-400 dark:text-stone-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  সেটিংস
+                </p>
+                
+                <button
+                  onClick={() => { onExportData(); if(isMobile) setIsSidebarOpen(false); }}
+                  className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-300 group"
+                >
+                  <Download className="w-4 h-4 shrink-0 group-hover:text-gold transition-colors" />
+                  <span className="text-sm font-medium">ব্যাকআপ নিন</span>
+                </button>
+
+                <button
+                  onClick={handleImportClick}
+                  className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-300 group"
+                >
+                  <Upload className="w-4 h-4 shrink-0 group-hover:text-gold transition-colors" />
+                  <span className="text-sm font-medium">রিস্টোর করুন</span>
+                </button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={(e) => { onImportData(e); if(isMobile) setIsSidebarOpen(false); }} 
+                  className="hidden" 
+                  accept=".json"
+                />
+              </div>
+            </>
+          )}
         </nav>
 
-        {/* Footer */}
-        <div className="p-8 border-t border-stone-100 dark:border-stone-800 whitespace-nowrap overflow-hidden flex-shrink-0 bg-stone-50 dark:bg-[#161413] transition-colors">
-          <p className="text-xs text-stone-500 dark:text-stone-600 font-serif italic">
-            &copy; {new Date().getFullYear()} SaadWrites.<br/>All rights reserved.
-          </p>
+        {/* Footer with Stats */}
+        <div className="p-8 border-t border-stone-100 dark:border-stone-800 whitespace-nowrap overflow-hidden flex-shrink-0 bg-stone-50 dark:bg-[#161413] transition-colors space-y-4 relative">
+          {isAdmin && (
+             <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-stone-500 dark:text-stone-500 animate-fade-in">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-3 h-3" /> মোট পাঠক
+                </div>
+                <span className="text-gold">{totalVisits.toLocaleString()}</span>
+             </div>
+          )}
+          
+          <div className="flex justify-between items-end">
+             <p className="text-xs text-stone-400 dark:text-stone-600 font-serif italic">
+               &copy; {new Date().getFullYear()} SaadWrites.<br/>All rights reserved.
+             </p>
+             <button 
+               onClick={toggleAdmin}
+               className="text-stone-300 hover:text-gold dark:text-stone-700 dark:hover:text-gold transition-colors"
+               title={isAdmin ? "রিডার মোড চালু করুন" : "এডিটর মোড চালু করুন"}
+             >
+               {isAdmin ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+             </button>
+          </div>
         </div>
       </aside>
 

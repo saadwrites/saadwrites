@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, Sparkles, Image as ImageIcon, X, Bold, Italic, List, FolderOpen, FileText } from 'lucide-react';
+import { Save, Sparkles, Image as ImageIcon, X, Bold, Italic, List, FolderOpen, FileText, Clock, Type } from 'lucide-react';
 import { generateWritingAssistance } from '../services/geminiService';
-import { Article, ArticleCategory } from '../types';
+import { Article, ArticleCategory, ToastType } from '../types';
 
 interface EditorProps {
   initialArticle?: Article;
   onSave: (article: Article) => void;
   onCancel: () => void;
   existingCategories?: string[];
+  onShowToast: (msg: string, type: ToastType) => void;
 }
 
-export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel, existingCategories = [] }) => {
+export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel, existingCategories = [], onShowToast }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState('');
@@ -19,8 +20,14 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
   const [availableCategories, setAvailableCategories] = useState<string[]>(['গল্প', 'কবিতা', 'প্রবন্ধ', 'অন্যান্য']);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showAiMenu, setShowAiMenu] = useState(false);
+  const [newCatInput, setNewCatInput] = useState('');
+  const [showNewCatInput, setShowNewCatInput] = useState(false);
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Stats
+  const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
+  const readingTime = Math.ceil(wordCount / 200);
 
   // Initialize categories
   useEffect(() => {
@@ -29,6 +36,7 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
     setAvailableCategories(prev => Array.from(new Set([...prev, ...merged])));
   }, [existingCategories]);
 
+  // Restore or Init Data
   useEffect(() => {
     if (initialArticle) {
       setTitle(initialArticle.title);
@@ -36,19 +44,26 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
       setTags(initialArticle.tags.join(', '));
       setCategory(initialArticle.category);
       setCoverImage(initialArticle.coverImage || null);
-      
-      setAvailableCategories(prev => {
-        if (!prev.includes(initialArticle.category)) {
-          return [...prev, initialArticle.category];
-        }
-        return prev;
-      });
+    } else {
+      // Auto-restore draft from session
+      const savedTitle = localStorage.getItem('saadwrites_draft_title');
+      const savedContent = localStorage.getItem('saadwrites_draft_content');
+      if (savedTitle) setTitle(savedTitle);
+      if (savedContent) setContent(savedContent);
     }
   }, [initialArticle]);
 
+  // Auto-save to localStorage
+  useEffect(() => {
+    if (!initialArticle) {
+      localStorage.setItem('saadwrites_draft_title', title);
+      localStorage.setItem('saadwrites_draft_content', content);
+    }
+  }, [title, content, initialArticle]);
+
   const handleSave = (status: 'published' | 'draft') => {
     if (!title.trim() && !content.trim()) {
-      alert('অনুগ্রহ করে অন্তত শিরোনাম বা কিছু লেখা লিখুন');
+      onShowToast('অনুগ্রহ করে অন্তত শিরোনাম বা কিছু লেখা লিখুন', 'error');
       return;
     }
     
@@ -61,7 +76,8 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
       coverImage: coverImage || undefined,
       category,
       comments: initialArticle?.comments,
-      status: status
+      status: status,
+      views: initialArticle?.views || 0
     };
     
     onSave(article);
@@ -70,27 +86,33 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     if (value === '__NEW__') {
-      const newCat = prompt('নতুন ক্যাটাগরির নাম লিখুন:');
-      if (newCat && newCat.trim()) {
-        const trimmedCat = newCat.trim();
-        setAvailableCategories(prev => [...prev, trimmedCat]);
-        setCategory(trimmedCat);
-      }
-      // If user cancels prompt, we don't change category (stays on previous)
-      // or we could force it to a default. For now, staying on previous is fine
-      // but the select element might show "+ নতুন" visually if we don't force re-render.
-      // React state 'category' will ensure the value is correct on re-render.
+      setShowNewCatInput(true);
     } else {
       setCategory(value);
+      setShowNewCatInput(false);
+    }
+  };
+
+  const handleAddCategory = () => {
+    if (newCatInput.trim()) {
+      setAvailableCategories(prev => [...prev, newCatInput.trim()]);
+      setCategory(newCatInput.trim());
+      setNewCatInput('');
+      setShowNewCatInput(false);
     }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        onShowToast('ছবির সাইজ ২MB এর বেশি হতে পারবে না', 'error');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setCoverImage(reader.result as string);
+        onShowToast('ছবি যুক্ত হয়েছে', 'success');
       };
       reader.readAsDataURL(file);
     }
@@ -119,9 +141,10 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
       const result = await generateWritingAssistance(task === 'ideas' ? title : '', content, task);
       if (task === 'grammar' || task === 'expand') setContent(prev => prev + '\n\n' + result);
       else if (task === 'ideas') setContent(prev => prev + '\n\n--- আইডিয়া সমূহ ---\n' + result);
-      else if (task === 'summarize') alert('সারসংক্ষেপ:\n' + result);
+      else if (task === 'summarize') alert('সারসংক্ষেপ:\n' + result); // Could use a modal here
+      onShowToast('এআই জেনারেশন সম্পন্ন হয়েছে', 'success');
     } catch (error) {
-      alert('এআই জেনারেশনে সমস্যা হয়েছে।');
+      onShowToast('এআই সেবা সংযোগে সমস্যা হচ্ছে', 'error');
     } finally {
       setIsGenerating(false);
     }
@@ -193,14 +216,29 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
         <div className="flex flex-wrap items-center gap-6 text-stone-400 border-y border-stone-200 dark:border-stone-800 py-4 sticky top-24 z-10 bg-cream dark:bg-[#0f0f0f] transition-colors">
           <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-stone-200 dark:border-stone-800 hover:border-gold transition-colors">
             <FolderOpen className="w-4 h-4 text-gold" />
-            <select 
-              value={category}
-              onChange={handleCategoryChange}
-              className="bg-transparent border-none text-xs font-bold uppercase tracking-wider text-charcoal dark:text-stone-300 focus:ring-0 cursor-pointer p-0 pr-6 focus:outline-none"
-            >
-              {availableCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-              <option value="__NEW__" className="text-gold font-bold">+ নতুন</option>
-            </select>
+            {!showNewCatInput ? (
+              <select 
+                value={category}
+                onChange={handleCategoryChange}
+                className="bg-transparent border-none text-xs font-bold uppercase tracking-wider text-charcoal dark:text-stone-300 focus:ring-0 cursor-pointer p-0 pr-6 focus:outline-none"
+              >
+                {availableCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                <option value="__NEW__" className="text-gold font-bold">+ নতুন</option>
+              </select>
+            ) : (
+              <div className="flex items-center">
+                <input 
+                  type="text" 
+                  autoFocus
+                  placeholder="নাম লিখুন..." 
+                  value={newCatInput}
+                  onChange={e => setNewCatInput(e.target.value)}
+                  className="bg-transparent border-none text-xs font-bold focus:ring-0 p-0 w-24"
+                />
+                <button onClick={handleAddCategory} className="text-gold text-xs px-2 hover:underline">Add</button>
+                <button onClick={() => setShowNewCatInput(false)} className="text-stone-400 px-1 hover:text-red-500"><X className="w-3 h-3"/></button>
+              </div>
+            )}
           </div>
 
           <div className="h-6 w-px bg-stone-300 dark:bg-stone-700"></div>
@@ -212,6 +250,12 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
           </div>
 
           <div className="h-6 w-px bg-stone-300 dark:bg-stone-700"></div>
+
+          {/* Stats */}
+          <div className="flex gap-4 text-xs font-bold uppercase tracking-wider text-stone-500 hidden md:flex">
+             <span className="flex items-center gap-1"><Type className="w-3 h-3"/> {wordCount} শব্দ</span>
+             <span className="flex items-center gap-1"><Clock className="w-3 h-3"/> {readingTime} মিনিট</span>
+          </div>
 
           <div className="relative ml-auto">
              <button 
