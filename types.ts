@@ -24,6 +24,7 @@ export enum ViewState {
   EDITOR = 'EDITOR',
   READER = 'READER',
   CONTACT = 'CONTACT',
+  ABOUT = 'ABOUT',
 }
 
 export interface WritingPrompt {

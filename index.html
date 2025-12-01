@@ -5,14 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>saadwrites - ব্যক্তিগত ব্লগ</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@300;400;500;600;700&family=Hind+Siliguri:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Noto+Serif+Bengali:wght@400;500;600;700&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
+        darkMode: 'class',
         theme: {
           extend: {
             fontFamily: {
               sans: ['"Anek Bangla"', 'sans-serif'],
               serif: ['"Merriweather"', 'serif'],
+              hind: ['"Hind Siliguri"', 'sans-serif'],
+              kalpurush: ['"Noto Serif Bengali"', 'serif'],
+              bornomala: ['"Tiro Bangla"', 'serif'],
             },
             colors: {
               paper: '#fdfbf7',
@@ -27,6 +31,10 @@
       body {
         background-color: #fdfbf7;
         color: #2d2d2d;
+      }
+      .dark body {
+        background-color: #1a1a1a;
+        color: #e5e5e5;
       }
     </style>
   <script type="importmap">

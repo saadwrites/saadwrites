@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Layout } from './components/Layout';
 import { Editor } from './components/Editor';
 import { ArticleList } from './components/ArticleList';
 import { ArticleReader } from './components/ArticleReader';
 import { Contact } from './components/Contact';
+import { About } from './components/About';
 import { Article, ViewState, Comment } from './types';
 
 // Initial dummy data for visual population
@@ -54,19 +55,116 @@ export default function App() {
     return saved ? JSON.parse(saved) : INITIAL_ARTICLES;
   });
   const [activeArticle, setActiveArticle] = useState<Article | null>(null);
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
+  
+  // Theme State
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('saadwrites_theme');
+      if (savedTheme) return savedTheme as 'light' | 'dark';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'light';
+  });
 
   useEffect(() => {
     localStorage.setItem('lekhoni_articles', JSON.stringify(articles));
   }, [articles]);
 
-  const handleSaveArticle = (newArticle: Article) => {
-    setArticles([newArticle, ...articles]);
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('saadwrites_theme', theme);
+  }, [theme]);
+
+  // Derived state for all categories used in articles
+  const allCategories = useMemo(() => {
+    const defaultCats = ['গল্প', 'কবিতা', 'প্রবন্ধ', 'অন্যান্য'];
+    const articleCats = articles.map(a => a.category);
+    return Array.from(new Set([...defaultCats, ...articleCats]));
+  }, [articles]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  // Backup & Restore functionality
+  const handleExportData = () => {
+    const dataStr = JSON.stringify(articles, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `saadwrites_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileReader = new FileReader();
+    if (e.target.files && e.target.files.length > 0) {
+      fileReader.readAsText(e.target.files[0], "UTF-8");
+      fileReader.onload = (event) => {
+        try {
+          if (event.target?.result) {
+            const parsedData = JSON.parse(event.target.result as string);
+            if (Array.isArray(parsedData)) {
+              if (window.confirm('আপনি কি বর্তমান ডাটা রিপ্লেস করে ব্যাকআপ রিস্টোর করতে চান? এটি বর্তমান ডাটা মুছে ফেলবে।')) {
+                setArticles(parsedData);
+                alert('ডাটা সফলভাবে রিস্টোর করা হয়েছে!');
+                setView(ViewState.HOME);
+              }
+            } else {
+              alert('ভুল ফাইল ফরম্যাট!');
+            }
+          }
+        } catch (error) {
+          alert('ফাইল পড়তে সমস্যা হয়েছে। দয়া করে সঠিক JSON ফাইল আপলোড করুন।');
+        }
+      };
+    }
+  };
+
+  const handleSaveArticle = (articleData: Article) => {
+    if (editingArticle) {
+      // Update existing article
+      const updatedArticles = articles.map(a => 
+        a.id === articleData.id ? articleData : a
+      );
+      setArticles(updatedArticles);
+      setEditingArticle(null);
+    } else {
+      // Create new article
+      setArticles([articleData, ...articles]);
+    }
     setView(ViewState.HOME);
   };
 
   const handleSelectArticle = (article: Article) => {
     setActiveArticle(article);
     setView(ViewState.READER);
+  };
+
+  const handleDeleteArticle = (articleId: string) => {
+    const updatedArticles = articles.filter(a => a.id !== articleId);
+    setArticles(updatedArticles);
+    setActiveArticle(null);
+    setView(ViewState.HOME);
+  };
+
+  const handleEditArticle = (article: Article) => {
+    setEditingArticle(article);
+    setView(ViewState.EDITOR);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingArticle(null);
+    setView(ViewState.HOME);
   };
 
   const handleAddComment = (articleId: string, commentData: { author: string; content: string }) => {
@@ -103,8 +201,10 @@ export default function App() {
       case ViewState.EDITOR:
         return (
           <Editor 
+            initialArticle={editingArticle || undefined}
             onSave={handleSaveArticle} 
-            onCancel={() => setView(ViewState.HOME)} 
+            onCancel={handleCancelEdit}
+            existingCategories={allCategories}
           />
         );
       case ViewState.READER:
@@ -113,26 +213,42 @@ export default function App() {
             article={activeArticle} 
             onBack={() => setView(ViewState.HOME)} 
             onAddComment={handleAddComment}
+            onDelete={handleDeleteArticle}
+            onEdit={handleEditArticle}
           />
         ) : (
           <div className="text-center p-10">কোনো লেখা পাওয়া যায়নি</div>
         );
       case ViewState.CONTACT:
         return <Contact />;
+      case ViewState.ABOUT:
+        return <About />;
       case ViewState.HOME:
       default:
         return (
           <ArticleList 
             articles={articles} 
             onSelectArticle={handleSelectArticle} 
-            onNewArticle={() => setView(ViewState.EDITOR)}
+            onNewArticle={() => {
+              setEditingArticle(null);
+              setView(ViewState.EDITOR);
+            }}
+            theme={theme}
+            toggleTheme={toggleTheme}
           />
         );
     }
   };
 
   return (
-    <Layout currentView={view} onChangeView={setView}>
+    <Layout 
+      currentView={view} 
+      onChangeView={setView} 
+      theme={theme} 
+      toggleTheme={toggleTheme}
+      onExportData={handleExportData}
+      onImportData={handleImportData}
+    >
       {renderContent()}
     </Layout>
   );
