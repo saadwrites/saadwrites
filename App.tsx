@@ -24,7 +24,8 @@ const INITIAL_ARTICLES: Article[] = [
         content: 'খুব সুন্দর লিখেছেন! বৃষ্টির দিনে এমন অনুভূতি আমাদের সবারই হয়।',
         createdAt: Date.now() - 86400000
       }
-    ]
+    ],
+    status: 'published'
   },
   {
     id: '2',
@@ -34,7 +35,8 @@ const INITIAL_ARTICLES: Article[] = [
     tags: ['প্রযুক্তি', 'জীবন', 'ভাবনা'],
     category: 'প্রবন্ধ',
     coverImage: 'https://picsum.photos/800/400?random=2',
-    comments: []
+    comments: [],
+    status: 'published'
   },
   {
     id: '3',
@@ -44,7 +46,8 @@ const INITIAL_ARTICLES: Article[] = [
     tags: ['কবিতা', 'পথিক', 'জীবন'],
     category: 'কবিতা',
     coverImage: 'https://picsum.photos/800/400?random=3',
-    comments: []
+    comments: [],
+    status: 'published'
   }
 ];
 
@@ -210,8 +213,10 @@ export default function App() {
       case ViewState.READER:
         return activeArticle ? (
           <ArticleReader 
-            article={activeArticle} 
+            article={activeArticle}
+            allArticles={articles}
             onBack={() => setView(ViewState.HOME)} 
+            onSelectArticle={handleSelectArticle}
             onAddComment={handleAddComment}
             onDelete={handleDeleteArticle}
             onEdit={handleEditArticle}

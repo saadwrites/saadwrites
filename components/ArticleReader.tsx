@@ -1,22 +1,23 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Calendar, Tag, Share2, MessageCircle, User, Send, Folder, Type, Settings, Edit2, Trash2, Hourglass, Facebook, Twitter, Linkedin } from 'lucide-react';
+import { ArrowLeft, Share2, MessageCircle, User, Send, Settings, Edit2, Trash2, Facebook, Twitter, Linkedin, Copy, ArrowRight } from 'lucide-react';
 import { Article } from '../types';
 
 interface ArticleReaderProps {
   article: Article;
+  allArticles?: Article[];
   onBack: () => void;
+  onSelectArticle?: (article: Article) => void;
   onAddComment: (articleId: string, comment: { author: string; content: string }) => void;
   onDelete: (id: string) => void;
   onEdit: (article: Article) => void;
 }
 
-export const ArticleReader: React.FC<ArticleReaderProps> = ({ article, onBack, onAddComment, onDelete, onEdit }) => {
+export const ArticleReader: React.FC<ArticleReaderProps> = ({ article, allArticles = [], onBack, onSelectArticle, onAddComment, onDelete, onEdit }) => {
   const [commentAuthor, setCommentAuthor] = useState('');
   const [commentContent, setCommentContent] = useState('');
-  const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg' | 'xl'>('base');
-  const [fontFamily, setFontFamily] = useState<'serif' | 'kalpurush' | 'bornomala' | 'hind'>('serif');
+  const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg' | 'xl'>('lg');
+  const [fontFamily, setFontFamily] = useState<'serif' | 'kalpurush' | 'bornomala' | 'hind'>('kalpurush');
   const [showSettings, setShowSettings] = useState(false);
-  const [showShare, setShowShare] = useState(false);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString('bn-BD', {
@@ -46,18 +47,18 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({ article, onBack, o
   };
 
   const handleDeleteClick = () => {
-    if (window.confirm('আপনি কি নিশ্চিত যে আপনি এই লেখাটি মুছে ফেলতে চান? এটি আর ফিরিয়ে আনা যাবে না।')) {
+    if (window.confirm('আপনি কি নিশ্চিত যে আপনি এই লেখাটি মুছে ফেলতে চান?')) {
       onDelete(article.id);
     }
   };
 
   const getFontSizeClass = () => {
     switch (fontSize) {
-      case 'sm': return 'prose-sm';
-      case 'base': return 'prose-base';
-      case 'lg': return 'prose-lg';
-      case 'xl': return 'prose-xl';
-      default: return 'prose-lg';
+      case 'sm': return 'text-lg';
+      case 'base': return 'text-xl';
+      case 'lg': return 'text-2xl';
+      case 'xl': return 'text-3xl';
+      default: return 'text-2xl';
     }
   };
 
@@ -70,45 +71,23 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({ article, onBack, o
     }
   };
 
-  // Simple Markdown Parser for display
   const renderContent = (content: string) => {
-    // Split by newlines to handle paragraphs
     const paragraphs = content.split('\n');
-    
     return paragraphs.map((paragraph, index) => {
       if (!paragraph.trim()) return <br key={index} />;
-
-      // Handle Lists
       if (paragraph.trim().startsWith('- ')) {
-        return (
-          <li key={index} className="list-disc ml-6 my-2">
-            {parseInlineStyles(paragraph.substring(2))}
-          </li>
-        );
+        return <li key={index} className="list-disc ml-6 my-4 marker:text-gold pl-2">{parseInlineStyles(paragraph.substring(2))}</li>;
       }
-
-      return (
-        <p key={index} className="mb-4 last:mb-0">
-          {parseInlineStyles(paragraph)}
-        </p>
-      );
+      return <p key={index} className="mb-8 last:mb-0 leading-[2] text-justify">{parseInlineStyles(paragraph)}</p>;
     });
   };
 
   const parseInlineStyles = (text: string) => {
-    // Regex for bold (**text**), italic (*text*), underline (__text__)
     const parts = text.split(/(\*\*.*?\*\*|\*.*?\*|__.*?__)/g);
-    
     return parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
-      }
-      if (part.startsWith('*') && part.endsWith('*')) {
-        return <em key={i} className="italic">{part.slice(1, -1)}</em>;
-      }
-      if (part.startsWith('__') && part.endsWith('__')) {
-        return <u key={i} className="underline underline-offset-4">{part.slice(2, -2)}</u>;
-      }
+      if (part.startsWith('**') && part.endsWith('**')) return <strong key={i} className="font-bold text-charcoal dark:text-white">{part.slice(2, -2)}</strong>;
+      if (part.startsWith('*') && part.endsWith('*')) return <em key={i} className="italic text-stone-600 dark:text-stone-400">{part.slice(1, -1)}</em>;
+      if (part.startsWith('__') && part.endsWith('__')) return <u key={i} className="underline underline-offset-4 decoration-gold/50">{part.slice(2, -2)}</u>;
       return part;
     });
   };
@@ -116,69 +95,47 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({ article, onBack, o
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
   const shareText = `পড়ুন: ${article.title} - SaadWrites`;
 
+  // Get Related Articles
+  const relatedArticles = allArticles
+    .filter(a => a.category === article.category && a.id !== article.id && a.status !== 'draft')
+    .slice(0, 3);
+
   return (
-    <article className="max-w-3xl mx-auto animate-fade-in pb-20">
-      <div className="flex justify-between items-center mb-8">
-        <button 
-          onClick={onBack}
-          className="group flex items-center gap-2 text-stone-500 hover:text-accent transition-colors dark:text-stone-400"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span>ফিরে যান</span>
+    <article className="animate-slide-up pb-20">
+      {/* Action Toolbar */}
+      <div className="flex justify-between items-center mb-12 sticky top-0 bg-cream/90 dark:bg-[#0f0f0f]/90 backdrop-blur-md z-40 py-4 border-b border-stone-200/50 dark:border-stone-800">
+        <button onClick={onBack} className="flex items-center gap-2 text-stone-500 hover:text-charcoal dark:hover:text-white transition-colors group">
+          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="font-medium text-sm hidden md:inline">ফিরে যান</span>
         </button>
 
         <div className="flex items-center gap-2">
-          <button 
-            onClick={() => onEdit(article)}
-            className="p-2 text-stone-500 hover:text-blue-600 dark:text-stone-400 dark:hover:text-blue-400 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-            title="সম্পাদনা করুন"
-          >
-            <Edit2 className="w-5 h-5" />
-          </button>
-          
-          <button 
-            onClick={handleDeleteClick}
-            className="p-2 text-stone-500 hover:text-red-600 dark:text-stone-400 dark:hover:text-red-400 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-            title="মুছে ফেলুন"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
-
-          <div className="w-px h-6 bg-stone-300 dark:bg-stone-600 mx-1"></div>
-
+          <button onClick={() => onEdit(article)} className="p-2.5 text-stone-500 hover:text-blue-600 transition-colors rounded-full hover:bg-white dark:hover:bg-stone-800" title="এডিট করুন"><Edit2 className="w-4 h-4" /></button>
+          <button onClick={handleDeleteClick} className="p-2.5 text-stone-500 hover:text-red-600 transition-colors rounded-full hover:bg-white dark:hover:bg-stone-800" title="ডিলিট করুন"><Trash2 className="w-4 h-4" /></button>
+          <div className="w-px h-5 bg-stone-300 dark:bg-stone-700 mx-1"></div>
           <div className="relative">
-            <button 
-              onClick={() => setShowSettings(!showSettings)}
-              className="p-2 text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-              title="পড়ার সেটিংস"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-            
+            <button onClick={() => setShowSettings(!showSettings)} className={`p-2.5 transition-colors rounded-full ${showSettings ? 'bg-charcoal text-white' : 'text-stone-500 hover:text-charcoal dark:hover:text-white hover:bg-white dark:hover:bg-stone-800'}`} title="সেটিংস"><Settings className="w-4 h-4" /></button>
             {showSettings && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-stone-800 rounded-xl shadow-xl border border-stone-200 dark:border-stone-700 p-4 z-20">
-                <div className="mb-4">
-                  <p className="text-xs font-bold text-stone-400 uppercase mb-2">ফন্ট সাইজ</p>
-                  <div className="flex justify-between bg-stone-100 dark:bg-stone-900 rounded-lg p-1">
-                    {(['sm', 'base', 'lg', 'xl'] as const).map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setFontSize(s)}
-                        className={`flex-1 py-1 rounded-md text-sm font-medium transition-colors ${fontSize === s ? 'bg-white dark:bg-stone-700 shadow-sm text-stone-900 dark:text-white' : 'text-stone-500 hover:text-stone-800'}`}
-                      >
-                        {s === 'sm' ? 'A' : s === 'base' ? 'A+' : s === 'lg' ? 'A++' : 'A+++'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-stone-400 uppercase mb-2">ফন্ট স্টাইল</p>
-                  <div className="space-y-1">
-                    <button onClick={() => setFontFamily('serif')} className={`w-full text-left px-3 py-2 rounded-lg text-sm font-serif ${fontFamily === 'serif' ? 'bg-stone-100 dark:bg-stone-700 text-accent' : 'text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-900'}`}>মেরিওয়েদার (ডিফল্ট)</button>
-                    <button onClick={() => setFontFamily('kalpurush')} className={`w-full text-left px-3 py-2 rounded-lg text-sm font-kalpurush ${fontFamily === 'kalpurush' ? 'bg-stone-100 dark:bg-stone-700 text-accent' : 'text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-900'}`}>কালপুরুষ</button>
-                    <button onClick={() => setFontFamily('bornomala')} className={`w-full text-left px-3 py-2 rounded-lg text-sm font-bornomala ${fontFamily === 'bornomala' ? 'bg-stone-100 dark:bg-stone-700 text-accent' : 'text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-900'}`}>বর্ণমালা</button>
-                    <button onClick={() => setFontFamily('hind')} className={`w-full text-left px-3 py-2 rounded-lg text-sm font-hind ${fontFamily === 'hind' ? 'bg-stone-100 dark:bg-stone-700 text-accent' : 'text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-900'}`}>হিন্দ শিলিগুড়ি</button>
-                  </div>
+              <div className="absolute right-0 top-full mt-4 w-72 bg-white dark:bg-stone-900 rounded-lg shadow-premium border border-stone-100 dark:border-stone-800 p-6 z-50">
+                <div className="space-y-6">
+                   <div>
+                     <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3">ফন্ট সাইজ</p>
+                     <div className="flex bg-stone-100 dark:bg-stone-800 rounded-md p-1">
+                       {(['sm', 'base', 'lg', 'xl'] as const).map(s => (
+                         <button key={s} onClick={() => setFontSize(s)} className={`flex-1 py-1.5 rounded text-xs font-bold font-serif transition-all ${fontSize === s ? 'bg-white dark:bg-stone-700 shadow-sm text-charcoal dark:text-white' : 'text-stone-400'}`}>{s === 'sm' ? 'A' : s === 'xl' ? 'A++' : 'A+'}</button>
+                       ))}
+                     </div>
+                   </div>
+                   <div>
+                     <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3">ফন্ট স্টাইল</p>
+                     <div className="space-y-1">
+                       {['serif', 'kalpurush', 'bornomala', 'hind'].map(f => (
+                         <button key={f} onClick={() => setFontFamily(f as any)} className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors ${fontFamily === f ? 'bg-stone-100 dark:bg-stone-800 text-gold font-bold' : 'text-stone-500 hover:bg-stone-50 dark:hover:bg-stone-800/50'}`}>
+                           {f === 'hind' ? 'হিন্দ শিলিগুড়ি (Sans)' : f === 'serif' ? 'মেরিওয়েদার (Serif)' : f === 'kalpurush' ? 'কালপুরুষ (Classic)' : 'বর্ণমালা (Artistic)'}
+                         </button>
+                       ))}
+                     </div>
+                   </div>
                 </div>
               </div>
             )}
@@ -186,164 +143,125 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({ article, onBack, o
         </div>
       </div>
 
-      <header className="mb-10 text-center">
-        <div className="flex items-center justify-center gap-4 text-sm text-stone-500 dark:text-stone-400 mb-4 flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <Folder className="w-4 h-4" />
-            <span className="font-medium text-accent">{article.category}</span>
-          </div>
-          <div className="hidden md:block w-1 h-1 bg-stone-300 rounded-full"></div>
-          <div className="flex items-center gap-1.5">
-            <Calendar className="w-4 h-4" />
-            <span>{formatDate(article.createdAt)}</span>
-          </div>
-          <div className="hidden md:block w-1 h-1 bg-stone-300 rounded-full"></div>
-          <div className="flex items-center gap-1.5">
-            <Hourglass className="w-4 h-4" />
-            <span>{calculateReadingTime(article.content)} সময় লাগবে</span>
-          </div>
+      {/* Article Header - Minimalist but Grand */}
+      <header className="mb-16 text-center max-w-4xl mx-auto animate-fade-in">
+        <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-bold uppercase tracking-[0.2em] text-gold mb-6">
+          <span>{article.category}</span>
+          <span className="w-1 h-1 rounded-full bg-gold"></span>
+          <span>{formatDate(article.createdAt)}</span>
+          <span className="w-1 h-1 rounded-full bg-gold"></span>
+          <span>{calculateReadingTime(article.content)}</span>
+          {article.status === 'draft' && <span className="px-2 py-0.5 bg-stone-200 dark:bg-stone-800 text-stone-500 rounded text-[10px] ml-2">খসড়া</span>}
         </div>
         
-        <h1 className="text-4xl md:text-5xl font-hind font-bold text-stone-900 dark:text-stone-100 leading-tight mb-8">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-kalpurush font-bold text-charcoal dark:text-stone-50 leading-tight mb-10">
           {article.title}
         </h1>
 
         {article.coverImage && (
-          <div className="w-full h-64 md:h-96 rounded-2xl overflow-hidden mb-8 shadow-lg">
-            <img 
-              src={article.coverImage} 
-              alt={article.title} 
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
-
-        {article.tags.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-2 mb-8">
-            {article.tags.map(tag => (
-              <span key={tag} className="px-3 py-1 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-full text-xs font-medium flex items-center gap-1">
-                <Tag className="w-3 h-3" />
-                {tag}
-              </span>
-            ))}
+          <div className="w-full relative shadow-2xl rounded-sm overflow-hidden mb-8 group">
+             <div className="aspect-w-16 aspect-h-9 md:aspect-h-7">
+               <img src={article.coverImage} alt={article.title} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105" />
+             </div>
+             <div className="absolute inset-0 ring-1 ring-inset ring-black/10"></div>
           </div>
         )}
       </header>
 
-      <div className={`prose dark:prose-invert max-w-none ${getFontSizeClass()} ${getFontFamilyClass()} text-stone-700 dark:text-stone-300 leading-8 transition-all`}>
+      {/* Content - The Book Experience */}
+      <div className={`max-w-3xl mx-auto ${getFontSizeClass()} ${getFontFamilyClass()} text-charcoal dark:text-stone-300 antialiased`}>
         {renderContent(article.content)}
       </div>
 
-      <div className="mt-16 pt-8 border-t border-stone-200 dark:border-stone-700 flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="text-stone-500 text-sm">ভালো লাগলে বন্ধুদের সাথে শেয়ার করুন</p>
-        <div className="flex items-center gap-3">
-          <a 
-            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="p-3 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-            title="ফেসবুকে শেয়ার করুন"
-          >
-            <Facebook className="w-4 h-4" />
-          </a>
-          <a 
-            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="p-3 rounded-full bg-sky-500 text-white hover:bg-sky-600 transition-colors"
-            title="টুইটারে শেয়ার করুন"
-          >
-            <Twitter className="w-4 h-4" />
-          </a>
-          <a 
-            href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(article.title)}`} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="p-3 rounded-full bg-blue-800 text-white hover:bg-blue-900 transition-colors"
-            title="লিংকডইনে শেয়ার করুন"
-          >
-            <Linkedin className="w-4 h-4" />
-          </a>
-          <a 
-            href={`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="p-3 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors"
-            title="হোয়াটসঅ্যাপে শেয়ার করুন"
-          >
-            <Share2 className="w-4 h-4" />
-          </a>
-        </div>
+      <div className="max-w-3xl mx-auto mt-20">
+         <div className="h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent w-full mb-12"></div>
+         
+         {/* Footer Share */}
+         <div className="flex flex-col items-center gap-6 mb-16">
+            <p className="text-sm font-serif italic text-stone-500">লেখাটি শেয়ার করুন</p>
+            <div className="flex items-center gap-4">
+              <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" className="p-4 rounded-full bg-white dark:bg-stone-800 shadow-md hover:shadow-lg hover:text-blue-600 transition-all text-stone-400"><Facebook className="w-5 h-5" /></a>
+              <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" className="p-4 rounded-full bg-white dark:bg-stone-800 shadow-md hover:shadow-lg hover:text-sky-500 transition-all text-stone-400"><Twitter className="w-5 h-5" /></a>
+              <a href={`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`} target="_blank" rel="noopener noreferrer" className="p-4 rounded-full bg-white dark:bg-stone-800 shadow-md hover:shadow-lg hover:text-green-600 transition-all text-stone-400"><Share2 className="w-5 h-5" /></a>
+              <button onClick={() => navigator.clipboard.writeText(shareUrl)} className="p-4 rounded-full bg-white dark:bg-stone-800 shadow-md hover:shadow-lg hover:text-charcoal dark:hover:text-white transition-all text-stone-400"><Copy className="w-5 h-5" /></button>
+            </div>
+         </div>
       </div>
 
-      {/* Comments Section */}
-      <div className="mt-16">
-        <h3 className="text-2xl font-hind font-bold text-stone-800 dark:text-stone-100 mb-8 flex items-center gap-2">
-          <MessageCircle className="w-6 h-6" />
-          পাঠকের মন্তব্য ({article.comments?.length || 0})
-        </h3>
-
-        {/* Comment List */}
-        <div className="space-y-6 mb-12">
-          {article.comments && article.comments.length > 0 ? (
-            article.comments.map((comment) => (
-              <div key={comment.id} className="bg-stone-50 dark:bg-stone-800 p-6 rounded-xl border border-stone-100 dark:border-stone-700">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-700 flex items-center justify-center text-stone-500 dark:text-stone-400">
-                      <User className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-stone-800 dark:text-stone-200 text-sm font-hind">{comment.author}</h4>
-                      <p className="text-xs text-stone-400">{formatDate(comment.createdAt)}</p>
-                    </div>
+      {/* Related Articles Section */}
+      {relatedArticles.length > 0 && onSelectArticle && (
+        <div className="max-w-4xl mx-auto mb-20">
+          <h3 className="text-2xl font-kalpurush font-bold text-center text-charcoal dark:text-stone-100 mb-10">
+            আরও পড়ুন
+          </h3>
+          <div className="grid md:grid-cols-3 gap-8">
+            {relatedArticles.map(related => (
+              <div 
+                key={related.id}
+                onClick={() => onSelectArticle(related)}
+                className="group cursor-pointer bg-white dark:bg-[#161413] rounded-sm shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              >
+                {related.coverImage && (
+                  <div className="h-40 overflow-hidden relative">
+                    <img src={related.coverImage} alt={related.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  </div>
+                )}
+                <div className="p-6">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gold mb-2">{related.category}</p>
+                  <h4 className="text-xl font-kalpurush font-bold text-charcoal dark:text-stone-200 group-hover:text-gold transition-colors line-clamp-2 mb-2">
+                    {related.title}
+                  </h4>
+                  <div className="flex items-center gap-1 text-xs font-medium text-stone-400">
+                    পড়ুন <ArrowRight className="w-3 h-3" />
                   </div>
                 </div>
-                <p className="text-stone-700 dark:text-stone-300 text-sm leading-relaxed pl-10">
-                  {comment.content}
-                </p>
               </div>
-            ))
-          ) : (
-            <p className="text-stone-500 dark:text-stone-400 text-center py-8 italic bg-stone-50 dark:bg-stone-800 rounded-xl border border-dashed border-stone-200 dark:border-stone-700">
-              এখনো কোনো মন্তব্য নেই। আপনিই প্রথম মন্তব্য করুন!
-            </p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Comments Section - Premium Style */}
+      <div className="max-w-3xl mx-auto bg-white dark:bg-[#161413] p-8 md:p-12 rounded-sm shadow-xl border-t-4 border-gold">
+        <h3 className="text-2xl font-kalpurush font-bold text-charcoal dark:text-stone-100 mb-10 flex items-center gap-3">
+          পাঠকের মন্তব্য <span className="text-lg text-stone-400 font-normal">({article.comments?.length || 0})</span>
+        </h3>
+
+        <div className="space-y-10 mb-12">
+          {article.comments?.map((comment) => (
+            <div key={comment.id} className="flex gap-6 animate-fade-in">
+              <div className="w-12 h-12 rounded-full bg-cream dark:bg-stone-800 border border-stone-200 dark:border-stone-700 flex items-center justify-center text-gold shrink-0 font-serif font-bold text-xl shadow-sm">
+                {comment.author.charAt(0)}
+              </div>
+              <div className="space-y-2 flex-1">
+                <div className="flex items-center justify-between">
+                   <h4 className="font-bold font-serif text-charcoal dark:text-stone-200 text-lg">{comment.author}</h4>
+                   <span className="text-xs font-medium text-stone-400 uppercase tracking-wide">{formatDate(comment.createdAt)}</span>
+                </div>
+                <p className="text-stone-600 dark:text-stone-400 font-serif leading-relaxed text-lg">{comment.content}</p>
+              </div>
+            </div>
+          ))}
+          {(!article.comments || article.comments.length === 0) && (
+            <p className="text-center text-stone-400 italic font-serif py-4">এখনো কোনো মন্তব্য নেই। আপনিই প্রথম মন্তব্য করুন।</p>
           )}
         </div>
 
-        {/* Comment Form */}
-        <div className="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-sm">
-          <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-6 font-hind">আপনার মতামত জানান</h4>
-          <form onSubmit={handleCommentSubmit} className="space-y-4">
-            <div>
-              <input
-                required
-                type="text"
-                placeholder="আপনার নাম"
-                value={commentAuthor}
-                onChange={(e) => setCommentAuthor(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-stone-50 dark:bg-stone-700 border border-stone-200 dark:border-stone-600 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all text-sm text-stone-800 dark:text-stone-100 dark:placeholder-stone-400"
-              />
-            </div>
-            <div>
-              <textarea
-                required
-                rows={3}
-                placeholder="আপনার মন্তব্য এখানে লিখুন..."
-                value={commentContent}
-                onChange={(e) => setCommentContent(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-stone-50 dark:bg-stone-700 border border-stone-200 dark:border-stone-600 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all text-sm resize-none font-serif text-stone-800 dark:text-stone-100 dark:placeholder-stone-400"
-              />
-            </div>
-            <button
-              type="submit"
-              className="px-6 py-2.5 bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 rounded-lg text-sm font-medium hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors flex items-center gap-2"
-            >
-              <Send className="w-4 h-4" />
-              মন্তব্য প্রকাশ করুন
-            </button>
-          </form>
-        </div>
+        <form onSubmit={handleCommentSubmit} className="space-y-6">
+           <div>
+             <label className="block text-xs font-bold uppercase tracking-widest text-stone-500 mb-2">আপনার নাম</label>
+             <input required type="text" value={commentAuthor} onChange={(e) => setCommentAuthor(e.target.value)} className="w-full px-4 py-3 bg-stone-50 dark:bg-stone-800 border-b-2 border-stone-200 dark:border-stone-700 focus:border-gold outline-none transition-colors text-charcoal dark:text-stone-100 font-serif" placeholder="এখানে নাম লিখুন" />
+           </div>
+           <div>
+             <label className="block text-xs font-bold uppercase tracking-widest text-stone-500 mb-2">আপনার মন্তব্য</label>
+             <textarea required rows={4} value={commentContent} onChange={(e) => setCommentContent(e.target.value)} className="w-full px-4 py-3 bg-stone-50 dark:bg-stone-800 border-b-2 border-stone-200 dark:border-stone-700 focus:border-gold outline-none transition-colors resize-none text-charcoal dark:text-stone-100 font-serif" placeholder="মনের কথা খুলে বলুন..." />
+           </div>
+           <div className="text-right">
+             <button type="submit" className="px-8 py-3 bg-charcoal dark:bg-stone-100 text-white dark:text-charcoal rounded-full font-medium hover:bg-gold dark:hover:bg-gold transition-colors shadow-lg inline-flex items-center gap-2">
+               মন্তব্য প্রকাশ করুন <Send className="w-4 h-4" />
+             </button>
+           </div>
+        </form>
       </div>
     </article>
   );

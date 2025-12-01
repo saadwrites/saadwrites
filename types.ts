@@ -17,6 +17,7 @@ export interface Article {
   coverImage?: string;
   comments?: Comment[];
   category: ArticleCategory;
+  status: 'published' | 'draft';
 }
 
 export enum ViewState {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, Sparkles, RefreshCw, Type, AlignLeft, FolderOpen, Plus, Image as ImageIcon, X, Bold, Italic, Underline, List } from 'lucide-react';
+import { Save, Sparkles, RefreshCw, AlignLeft, Type, Plus, Image as ImageIcon, X, Bold, Italic, Underline, List, FolderOpen, FileText } from 'lucide-react';
 import { generateWritingAssistance } from '../services/geminiService';
 import { Article, ArticleCategory } from '../types';
 
@@ -22,7 +22,6 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Sync available categories with existing ones passed from App
   useEffect(() => {
     const defaults = ['গল্প', 'কবিতা', 'প্রবন্ধ', 'অন্যান্য'];
     const merged = Array.from(new Set([...defaults, ...existingCategories, ...availableCategories]));
@@ -37,7 +36,6 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
       setCategory(initialArticle.category);
       setCoverImage(initialArticle.coverImage || null);
       
-      // Ensure the category exists in the dropdown
       setAvailableCategories(prev => {
         if (!prev.includes(initialArticle.category)) {
           return [...prev, initialArticle.category];
@@ -47,21 +45,22 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
     }
   }, [initialArticle]);
 
-  const handleSave = () => {
-    if (!title.trim() || !content.trim()) {
-      alert('অনুগ্রহ করে শিরোনাম এবং বিষয়বস্তু লিখুন');
+  const handleSave = (status: 'published' | 'draft') => {
+    if (!title.trim() && !content.trim()) {
+      alert('অনুগ্রহ করে অন্তত শিরোনাম বা কিছু লেখা লিখুন');
       return;
     }
     
     const article: Article = {
       id: initialArticle ? initialArticle.id : Date.now().toString(),
-      title,
+      title: title.trim() || 'শিরোনামহীন',
       content,
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
       createdAt: initialArticle ? initialArticle.createdAt : Date.now(),
       coverImage: coverImage || undefined,
       category,
-      comments: initialArticle?.comments // Preserve comments if editing
+      comments: initialArticle?.comments,
+      status: status
     };
     
     onSave(article);
@@ -98,20 +97,13 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
     }
   };
 
-  // Helper to insert formatting tags
   const insertFormatting = (startTag: string, endTag: string) => {
     if (textareaRef.current) {
       const start = textareaRef.current.selectionStart;
       const end = textareaRef.current.selectionEnd;
       const text = content;
-      const before = text.substring(0, start);
-      const selection = text.substring(start, end);
-      const after = text.substring(end);
-      
-      const newText = before + startTag + selection + endTag + after;
+      const newText = text.substring(0, start) + startTag + text.substring(start, end) + endTag + text.substring(end);
       setContent(newText);
-      
-      // Reset cursor
       setTimeout(() => {
         if (textareaRef.current) {
           textareaRef.current.focus();
@@ -126,15 +118,9 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
     setShowAiMenu(false);
     try {
       const result = await generateWritingAssistance(task === 'ideas' ? title : '', content, task);
-      
-      if (task === 'grammar' || task === 'expand') {
-         setContent(prev => prev + '\n\n' + result);
-      } else if (task === 'ideas') {
-         setContent(prev => prev + '\n\n--- আইডিয়া সমূহ ---\n' + result);
-      } else if (task === 'summarize') {
-         alert('সারসংক্ষেপ:\n' + result);
-      }
-
+      if (task === 'grammar' || task === 'expand') setContent(prev => prev + '\n\n' + result);
+      else if (task === 'ideas') setContent(prev => prev + '\n\n--- আইডিয়া সমূহ ---\n' + result);
+      else if (task === 'summarize') alert('সারসংক্ষেপ:\n' + result);
     } catch (error) {
       alert('এআই জেনারেশনে সমস্যা হয়েছে।');
     } finally {
@@ -143,143 +129,128 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center pb-6 border-b border-stone-200 dark:border-stone-700">
-        <h2 className="text-3xl font-hind font-bold text-stone-800 dark:text-stone-100">
-          {initialArticle ? 'লেখা সম্পাদনা' : 'নতুন লেখা'}
-        </h2>
-        <div className="flex gap-3">
+    <div className="max-w-4xl mx-auto animate-fade-in pb-24">
+      {/* Top Action Bar */}
+      <div className="flex justify-between items-center mb-12 sticky top-0 bg-cream/90 dark:bg-[#0f0f0f]/90 backdrop-blur z-20 py-6 border-b border-stone-200/50 dark:border-stone-800">
+        <button 
+          onClick={onCancel}
+          className="text-stone-500 hover:text-charcoal dark:hover:text-stone-200 text-sm font-bold uppercase tracking-wider transition-colors"
+        >
+          বাতিল
+        </button>
+        <div className="flex gap-4">
           <button 
-            onClick={onCancel}
-            className="px-4 py-2 text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 transition-colors"
+            onClick={() => handleSave('draft')}
+            className="px-6 py-2.5 bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-full hover:bg-stone-300 dark:hover:bg-stone-700 transition-all text-sm font-bold uppercase tracking-wider flex items-center gap-2"
           >
-            বাতিল
+            <FileText className="w-4 h-4" />
+            খসড়া রাখুন
           </button>
           <button 
-            onClick={handleSave}
-            className="flex items-center gap-2 px-6 py-2 bg-stone-800 text-white rounded-full hover:bg-stone-700 transition-all shadow-lg hover:shadow-xl dark:bg-stone-200 dark:text-stone-900"
+            onClick={() => handleSave('published')}
+            className="px-8 py-2.5 bg-charcoal dark:bg-stone-100 text-white dark:text-charcoal rounded-full hover:bg-gold dark:hover:bg-gold transition-all shadow-lg text-sm font-bold uppercase tracking-wider flex items-center gap-2"
           >
             <Save className="w-4 h-4" />
-            {initialArticle ? 'হালনাগাদ করুন' : 'প্রকাশ করুন'}
+            {initialArticle && initialArticle.status === 'published' ? 'আপডেট করুন' : 'প্রকাশ করুন'}
           </button>
         </div>
       </div>
 
-      <div className="space-y-4">
-        
-        {/* Cover Image Preview */}
-        {coverImage && (
-          <div className="relative w-full h-48 md:h-64 rounded-xl overflow-hidden mb-6 group bg-stone-100 dark:bg-stone-800">
-            <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
-            <button 
-              onClick={() => setCoverImage(null)}
-              className="absolute top-2 right-2 p-2 bg-white/80 hover:bg-red-50 text-stone-600 hover:text-red-600 rounded-full shadow-sm transition-all dark:bg-black/50 dark:text-white dark:hover:bg-red-900/50"
-              title="ছবি মুছে ফেলুন"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
-        <div>
-          <input
-            type="text"
-            placeholder="গল্প বা প্রবন্ধের শিরোনাম..."
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full text-4xl font-hind font-bold bg-transparent border-none placeholder-stone-300 focus:ring-0 focus:outline-none text-stone-800 dark:text-stone-100 dark:placeholder-stone-600"
-          />
+      <div className="space-y-10">
+        {/* Cover Image Upload */}
+        <div className="group relative">
+          {coverImage ? (
+            <div className="relative w-full h-80 md:h-[450px] rounded-sm shadow-xl overflow-hidden bg-stone-100 dark:bg-stone-800">
+              <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/10"></div>
+              <button 
+                onClick={() => setCoverImage(null)}
+                className="absolute top-6 right-6 p-3 bg-white/90 text-stone-600 hover:text-red-600 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          ) : (
+            <label className="flex flex-col items-center justify-center h-48 w-full border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-lg hover:border-gold dark:hover:border-gold hover:bg-white/50 dark:hover:bg-stone-800/50 cursor-pointer transition-all gap-3 text-stone-400 hover:text-gold group">
+              <div className="p-3 bg-stone-100 dark:bg-stone-800 rounded-full group-hover:bg-gold/10 transition-colors">
+                <ImageIcon className="w-6 h-6" />
+              </div>
+              <span className="text-sm font-bold uppercase tracking-widest">কভার ছবি যুক্ত করুন</span>
+              <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+            </label>
+          )}
         </div>
 
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-4 py-3 border-y border-stone-200 dark:border-stone-700 sticky top-0 bg-paper/95 dark:bg-[#1a1a1a]/95 backdrop-blur z-10 transition-colors">
-          <div className="relative">
-            <button 
-              onClick={() => setShowAiMenu(!showAiMenu)}
-              disabled={isGenerating}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isGenerating ? 'bg-stone-100 text-stone-400 dark:bg-stone-800' : 'bg-accent/10 text-accent hover:bg-accent/20'}`}
-            >
-              {isGenerating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              {isGenerating ? 'লিখছে...' : 'এআই সাহায্য'}
-            </button>
-            
-            {showAiMenu && (
-              <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-stone-800 rounded-xl shadow-xl border border-stone-100 dark:border-stone-700 overflow-hidden z-20">
-                <button onClick={() => handleAiAssist('grammar')} className="w-full text-left px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-700 text-sm flex gap-2 items-center text-stone-700 dark:text-stone-200">
-                  <AlignLeft className="w-4 h-4 text-stone-400" /> ব্যাকরণ ঠিক করুন
-                </button>
-                <button onClick={() => handleAiAssist('expand')} className="w-full text-left px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-700 text-sm flex gap-2 items-center text-stone-700 dark:text-stone-200">
-                  <Type className="w-4 h-4 text-stone-400" /> লেখা বড় করুন
-                </button>
-                <button onClick={() => handleAiAssist('ideas')} className="w-full text-left px-4 py-3 hover:bg-stone-50 dark:hover:bg-stone-700 text-sm flex gap-2 items-center text-stone-700 dark:text-stone-200">
-                  <Sparkles className="w-4 h-4 text-stone-400" /> আইডিয়া জেনারেট করুন
-                </button>
-              </div>
-            )}
-          </div>
-          
-          <div className="h-4 w-px bg-stone-300 dark:bg-stone-600 hidden md:block"></div>
+        {/* Title Input */}
+        <input
+          type="text"
+          placeholder="শিরোনাম..."
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full text-5xl md:text-7xl font-kalpurush font-bold bg-transparent border-none placeholder-stone-300 dark:placeholder-stone-700 focus:ring-0 focus:outline-none text-charcoal dark:text-stone-50 p-0 leading-tight"
+        />
 
-          {/* Formatting Buttons */}
-          <div className="flex items-center gap-1">
-            <button onClick={() => insertFormatting('**', '**')} className="p-2 text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-md transition-colors" title="বোল্ড">
-              <Bold className="w-4 h-4" />
-            </button>
-            <button onClick={() => insertFormatting('*', '*')} className="p-2 text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-md transition-colors" title="ইটালিক">
-              <Italic className="w-4 h-4" />
-            </button>
-            <button onClick={() => insertFormatting('__', '__')} className="p-2 text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-md transition-colors" title="আন্ডারলাইন">
-              <Underline className="w-4 h-4" />
-            </button>
-            <button onClick={() => insertFormatting('\n- ', '')} className="p-2 text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-md transition-colors" title="লিস্ট">
-              <List className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="h-4 w-px bg-stone-300 dark:bg-stone-600 hidden md:block"></div>
-
-          {/* Image Upload Button */}
-          <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer text-stone-600 hover:bg-stone-100 hover:text-stone-900 transition-colors dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-200">
-            <ImageIcon className="w-4 h-4" />
-            <span className="hidden md:inline">কভার ছবি</span>
-            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-          </label>
-
-          <div className="h-4 w-px bg-stone-300 dark:bg-stone-600 hidden md:block"></div>
-
-          {/* Category Selector */}
-          <div className="flex items-center gap-2 bg-white dark:bg-stone-800 px-2 pl-3 py-1.5 rounded-lg border border-stone-200 dark:border-stone-700">
-            <FolderOpen className="w-4 h-4 text-stone-400" />
+        {/* Minimal Toolbar */}
+        <div className="flex flex-wrap items-center gap-6 text-stone-400 border-y border-stone-200 dark:border-stone-800 py-4 sticky top-24 z-10 bg-cream dark:bg-[#0f0f0f] transition-colors">
+          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-stone-200 dark:border-stone-800 hover:border-gold transition-colors">
+            <FolderOpen className="w-4 h-4 text-gold" />
             <select 
               value={category}
               onChange={handleCategoryChange}
-              className="bg-transparent border-none text-sm text-stone-700 dark:text-stone-300 focus:ring-0 cursor-pointer p-0 pr-6 focus:outline-none"
+              className="bg-transparent border-none text-xs font-bold uppercase tracking-wider text-charcoal dark:text-stone-300 focus:ring-0 cursor-pointer p-0 pr-6 focus:outline-none"
             >
-              {availableCategories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-              <option value="__NEW__" className="font-bold text-accent">+ নতুন যুক্ত করুন...</option>
+              {availableCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              <option value="__NEW__" className="text-gold">+ নতুন</option>
             </select>
           </div>
-          
-          <div className="h-4 w-px bg-stone-300 dark:bg-stone-600 hidden md:block"></div>
-          
-          <input 
-            type="text" 
-            placeholder="ট্যাগ সমূহ (কমা দিয়ে আলাদা করুন)"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            className="flex-1 min-w-[200px] bg-transparent text-sm text-stone-600 dark:text-stone-400 focus:outline-none placeholder-stone-400 dark:placeholder-stone-600"
-          />
+
+          <div className="h-6 w-px bg-stone-300 dark:bg-stone-700"></div>
+
+          <div className="flex gap-2">
+            <button onClick={() => insertFormatting('**', '**')} className="p-2 hover:text-charcoal dark:hover:text-white hover:bg-stone-200 dark:hover:bg-stone-800 rounded transition-colors" title="Bold"><Bold className="w-4 h-4" /></button>
+            <button onClick={() => insertFormatting('*', '*')} className="p-2 hover:text-charcoal dark:hover:text-white hover:bg-stone-200 dark:hover:bg-stone-800 rounded transition-colors" title="Italic"><Italic className="w-4 h-4" /></button>
+            <button onClick={() => insertFormatting('\n- ', '')} className="p-2 hover:text-charcoal dark:hover:text-white hover:bg-stone-200 dark:hover:bg-stone-800 rounded transition-colors" title="List"><List className="w-4 h-4" /></button>
+          </div>
+
+          <div className="h-6 w-px bg-stone-300 dark:bg-stone-700"></div>
+
+          <div className="relative ml-auto">
+             <button 
+               onClick={() => setShowAiMenu(!showAiMenu)}
+               disabled={isGenerating}
+               className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-all px-4 py-2 rounded-full ${isGenerating ? 'text-stone-300 bg-stone-100' : 'text-stone-500 hover:text-gold hover:bg-gold/10'}`}
+             >
+               <Sparkles className="w-4 h-4" />
+               {isGenerating ? 'চিন্তা করছে...' : 'এআই সাহায্য'}
+             </button>
+             {showAiMenu && (
+                <div className="absolute top-full right-0 mt-3 w-56 bg-white dark:bg-stone-900 rounded-lg shadow-premium border border-stone-100 dark:border-stone-700 overflow-hidden z-30 py-2">
+                  <button onClick={() => handleAiAssist('grammar')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">ব্যাকরণ ঠিক করুন</button>
+                  <button onClick={() => handleAiAssist('expand')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">লেখা বড় করুন</button>
+                  <button onClick={() => handleAiAssist('ideas')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">আইডিয়া দিন</button>
+                </div>
+              )}
+          </div>
         </div>
 
+        {/* Content Area */}
         <textarea
           ref={textareaRef}
-          placeholder="এখানে আপনার মনের কথা লিখুন..."
+          placeholder="আপনার গল্প শুরু করুন..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="w-full min-h-[60vh] text-lg leading-relaxed text-stone-700 dark:text-stone-300 bg-transparent border-none resize-none focus:ring-0 focus:outline-none font-serif placeholder-stone-300 dark:placeholder-stone-700"
+          className="w-full min-h-[60vh] text-xl md:text-2xl leading-[2] text-charcoal dark:text-stone-300 bg-transparent border-none resize-none focus:ring-0 focus:outline-none font-serif placeholder-stone-300 dark:placeholder-stone-700 p-0"
         />
+
+        <div className="pt-8 border-t border-stone-200 dark:border-stone-800">
+           <input 
+             type="text" 
+             placeholder="#ট্যাগ (যেমন: ভ্রমণ, স্মৃতি)"
+             value={tags}
+             onChange={(e) => setTags(e.target.value)}
+             className="w-full bg-transparent text-base font-medium text-stone-600 dark:text-stone-400 focus:outline-none placeholder-stone-300 dark:placeholder-stone-700 border-none p-0"
+           />
+        </div>
       </div>
     </div>
   );

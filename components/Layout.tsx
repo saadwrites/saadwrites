@@ -25,12 +25,10 @@ export const Layout: React.FC<LayoutProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Handle responsive sidebar state
   useEffect(() => {
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Auto-collapse on mobile, auto-open on desktop initially
       if (mobile) {
         setIsSidebarOpen(false);
       } else {
@@ -55,123 +53,104 @@ export const Layout: React.FC<LayoutProps> = ({
   };
 
   return (
-    // Main Container: Fixed height (100dvh for mobile address bar support), hidden overflow to prevent body scroll
-    <div className="h-[100dvh] w-full bg-paper text-ink font-sans flex transition-colors duration-300 overflow-hidden relative">
+    <div className="h-[100dvh] w-full bg-cream dark:bg-[#0f0f0f] text-charcoal dark:text-stone-200 font-sans flex transition-colors duration-500 overflow-hidden relative">
       
-      {/* Floating Toggle Button (Visible when sidebar is closed or on mobile) */}
+      {/* Floating Toggle Button */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className={`fixed top-4 left-4 z-[60] p-2.5 rounded-full bg-white dark:bg-stone-800 shadow-lg border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:text-accent transition-all duration-300 ${isSidebarOpen && !isMobile ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-        title="মেনু খুলুন/বন্ধ করুন"
+        className={`fixed top-6 left-6 z-[60] text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 transition-all duration-300 ${isSidebarOpen && !isMobile ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        title="মেনু"
       >
-        {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
       </button>
 
-      {/* Mobile Overlay Backdrop */}
+      {/* Mobile Overlay */}
       {isMobile && isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-[40] backdrop-blur-sm transition-opacity duration-300"
+          className="fixed inset-0 bg-black/60 z-[40] backdrop-blur-sm transition-opacity duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar Navigation */}
+      {/* Sidebar Navigation - Premium Dark Style */}
       <aside 
         className={`
           flex-shrink-0 z-[50] h-full
-          bg-white/95 dark:bg-stone-900/95 backdrop-blur-md
-          border-r border-stone-200 dark:border-stone-800 
-          flex flex-col transition-all duration-300 ease-in-out
+          bg-[#1c1917] text-stone-300
+          border-r border-stone-800 shadow-2xl
+          flex flex-col transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]
           ${isMobile ? 'fixed inset-y-0 left-0' : 'relative'}
           ${isSidebarOpen 
-            ? 'translate-x-0 w-72 shadow-2xl md:shadow-none' 
+            ? 'translate-x-0 w-80' 
             : '-translate-x-full md:translate-x-0 md:w-0 md:border-none md:overflow-hidden'}
         `}
       >
-        {/* Sidebar Header - Sticky/Fixed within sidebar */}
-        <div className="p-6 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between whitespace-nowrap overflow-hidden flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold font-serif tracking-tight text-stone-800 dark:text-stone-100 pl-1">saadwrites</h1>
+        {/* Sidebar Header */}
+        <div className="p-8 pt-10 flex items-center justify-between whitespace-nowrap overflow-hidden flex-shrink-0 border-b border-stone-800">
+          <div>
+            <h1 className="text-3xl font-bold font-kalpurush tracking-wide text-white">saadwrites</h1>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-gold mt-1">শব্দ যেখানে কথা বলে</p>
           </div>
           <button 
             onClick={() => setIsSidebarOpen(false)}
-            className="text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 hidden md:block"
+            className="text-stone-500 hover:text-white hidden md:block transition-colors"
             title="মেনু লুকান"
           >
             <PanelLeftClose className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Navigation Items - Scrollable area */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden whitespace-nowrap">
-          <button
-            onClick={() => handleNavClick(ViewState.HOME)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-              currentView === ViewState.HOME
-                ? 'bg-stone-800 text-white shadow-md dark:bg-stone-200 dark:text-stone-900'
-                : 'hover:bg-stone-100 text-stone-600 dark:text-stone-400 dark:hover:bg-stone-800'
-            }`}
-          >
-            <BookOpen className="w-5 h-5 shrink-0" />
-            <span className="font-medium">ব্লগ</span>
-          </button>
-
-          <button
-            onClick={() => handleNavClick(ViewState.EDITOR)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-              currentView === ViewState.EDITOR
-                ? 'bg-stone-800 text-white shadow-md dark:bg-stone-200 dark:text-stone-900'
-                : 'hover:bg-stone-100 text-stone-600 dark:text-stone-400 dark:hover:bg-stone-800'
-            }`}
-          >
-            <PenTool className="w-5 h-5 shrink-0" />
-            <span className="font-medium">নতুন লেখা</span>
-          </button>
-
-          <button
-            onClick={() => handleNavClick(ViewState.ABOUT)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-              currentView === ViewState.ABOUT
-                ? 'bg-stone-800 text-white shadow-md dark:bg-stone-200 dark:text-stone-900'
-                : 'hover:bg-stone-100 text-stone-600 dark:text-stone-400 dark:hover:bg-stone-800'
-            }`}
-          >
-            <User className="w-5 h-5 shrink-0" />
-            <span className="font-medium">আমার পরিচিতি</span>
-          </button>
-
-          <button
-            onClick={() => handleNavClick(ViewState.CONTACT)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-              currentView === ViewState.CONTACT
-                ? 'bg-stone-800 text-white shadow-md dark:bg-stone-200 dark:text-stone-900'
-                : 'hover:bg-stone-100 text-stone-600 dark:text-stone-400 dark:hover:bg-stone-800'
-            }`}
-          >
-            <Mail className="w-5 h-5 shrink-0" />
-            <span className="font-medium">যোগাযোগ</span>
-          </button>
+        {/* Navigation Items */}
+        <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto overflow-x-hidden whitespace-nowrap scrollbar-hide">
+          <NavButton 
+            active={currentView === ViewState.HOME} 
+            onClick={() => handleNavClick(ViewState.HOME)} 
+            icon={<BookOpen className="w-4 h-4" />} 
+            label="পাঠাগার" 
+            subLabel="আমার রচনাবলী"
+          />
+          <NavButton 
+            active={currentView === ViewState.EDITOR} 
+            onClick={() => handleNavClick(ViewState.EDITOR)} 
+            icon={<PenTool className="w-4 h-4" />} 
+            label="নুতন সৃষ্টি" 
+            subLabel="লেখা শুরু করুন"
+          />
+          <NavButton 
+            active={currentView === ViewState.ABOUT} 
+            onClick={() => handleNavClick(ViewState.ABOUT)} 
+            icon={<User className="w-4 h-4" />} 
+            label="লেখক পরিচিতি" 
+            subLabel="আমার সম্পর্কে"
+          />
+          <NavButton 
+            active={currentView === ViewState.CONTACT} 
+            onClick={() => handleNavClick(ViewState.CONTACT)} 
+            icon={<Mail className="w-4 h-4" />} 
+            label="যোগাযোগ" 
+            subLabel="বার্তা পাঠান"
+          />
 
           {/* Settings Section */}
-          <div className="pt-6 mt-6 border-t border-stone-200 dark:border-stone-800">
-            <p className="px-4 text-xs font-bold text-stone-400 uppercase mb-2 flex items-center gap-2">
-              <Settings className="w-3 h-3" /> সেটিংস ও ব্যাকআপ
+          <div className="pt-8 mt-8 border-t border-stone-800 mx-2">
+            <p className="px-4 text-[10px] font-bold text-stone-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+              সেটিংস
             </p>
             
             <button
               onClick={() => { onExportData(); if(isMobile) setIsSidebarOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-200 text-sm"
+              className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-all duration-300 group"
             >
-              <Download className="w-4 h-4 shrink-0" />
-              <span>ব্যাকআপ নিন</span>
+              <Download className="w-4 h-4 shrink-0 group-hover:text-gold transition-colors" />
+              <span className="text-sm font-medium">ব্যাকআপ নিন</span>
             </button>
 
             <button
               onClick={handleImportClick}
-              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-200 text-sm"
+              className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-all duration-300 group"
             >
-              <Upload className="w-4 h-4 shrink-0" />
-              <span>রিস্টোর করুন</span>
+              <Upload className="w-4 h-4 shrink-0 group-hover:text-gold transition-colors" />
+              <span className="text-sm font-medium">রিস্টোর করুন</span>
             </button>
             <input 
               type="file" 
@@ -183,21 +162,41 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </nav>
 
-        {/* Footer - Fixed at bottom of sidebar */}
-        <div className="p-6 border-t border-stone-200 dark:border-stone-800 whitespace-nowrap overflow-hidden flex-shrink-0">
-          <p className="text-xs text-stone-400 text-center truncate">
-            &copy; {new Date().getFullYear()} saadwrites
+        {/* Footer */}
+        <div className="p-8 border-t border-stone-800 whitespace-nowrap overflow-hidden flex-shrink-0 bg-[#161413]">
+          <p className="text-xs text-stone-600 font-serif italic">
+            &copy; {new Date().getFullYear()} SaadWrites.<br/>All rights reserved.
           </p>
         </div>
       </aside>
 
-      {/* Main Content Area - Scrollable independently */}
-      <main className="flex-1 h-full overflow-y-auto bg-paper dark:bg-[#1a1a1a] transition-colors duration-300 w-full min-w-0 relative scroll-smooth">
-        {/* Content container */}
-        <div className="max-w-4xl mx-auto p-4 md:p-8 lg:p-12 pt-20 md:pt-12">
+      {/* Main Content Area */}
+      <main className="flex-1 h-full overflow-y-auto bg-cream dark:bg-[#0f0f0f] transition-colors duration-500 w-full min-w-0 relative scroll-smooth">
+        <div className="max-w-6xl mx-auto px-6 md:px-16 py-24 md:py-24">
           {children}
         </div>
       </main>
     </div>
   );
 };
+
+const NavButton = ({ active, onClick, icon, label, subLabel }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, subLabel?: string }) => (
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-300 group border border-transparent ${
+      active
+        ? 'bg-stone-800 text-white border-stone-700 shadow-lg'
+        : 'text-stone-400 hover:text-white hover:bg-stone-800/50'
+    }`}
+  >
+    <span className={`p-2 rounded-md transition-colors ${active ? 'bg-gold text-white' : 'bg-stone-900 group-hover:bg-stone-700'}`}>
+      {icon}
+    </span>
+    <div className="text-left">
+      <span className={`block text-sm font-bold font-kalpurush tracking-wide ${active ? 'text-white' : 'text-stone-300 group-hover:text-white'}`}>
+        {label}
+      </span>
+      {subLabel && <span className="text-[10px] text-stone-600 group-hover:text-stone-500">{subLabel}</span>}
+    </div>
+  </button>
+);
