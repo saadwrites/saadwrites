@@ -281,14 +281,6 @@ export const Layout: React.FC<LayoutProps> = ({
                   className="hidden" 
                   accept=".json"
                 />
-
-                <button
-                  onClick={() => { onLoadDemoData(); if(isMobile) setIsSidebarOpen(false); }}
-                  className="w-full flex items-center gap-4 px-4 py-2.5 rounded-lg text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-100/50 dark:hover:bg-stone-800/30 transition-all duration-300 group"
-                >
-                  <Database className="w-4 h-4 shrink-0 group-hover:text-gold transition-colors" />
-                  <span className="text-sm font-medium">ডেমো ডাটা লোড করুন</span>
-                </button>
               </div>
             </>
           )}

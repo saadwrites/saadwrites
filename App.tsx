@@ -84,16 +84,14 @@ export default function App() {
     }, 3000);
   };
 
-  const handleLoadDemoData = async () => {
+  const seedArticles = async () => {
+    console.log("Auto-posting articles...");
     try {
       const promises = DEMO_ARTICLES.map(article => saveArticleToFirebase(article));
       await Promise.all(promises);
-      addToast('ডেমো ডাটা সফলভাবে লোড হয়েছে!', 'success');
-      setView(ViewState.HOME);
-      // Force refresh logic if needed, but subscription should handle it
+      addToast('নতুন লেখা পোস্ট হয়েছে', 'success');
     } catch (error) {
-      console.error(error);
-      addToast('ডেমো ডাটা লোড করতে সমস্যা হয়েছে', 'error');
+      console.error("Auto-post failed", error);
     }
   };
 
@@ -114,13 +112,30 @@ export default function App() {
       setArticles(fetchedArticles);
       setIsLoadingArticles(false);
 
+      // Check if we need to seed any missing demo articles
+      // This ensures new demo stories appear even if the list is not empty
+      const missingDemos = DEMO_ARTICLES.filter(demo => 
+        !fetchedArticles.some(existing => existing.id === demo.id)
+      );
+
+      if (missingDemos.length > 0) {
+        console.log(`Seeding ${missingDemos.length} missing demo articles...`);
+        missingDemos.forEach(async (article) => {
+           await saveArticleToFirebase(article);
+        });
+        if (missingDemos.length === DEMO_ARTICLES.length) {
+           addToast('স্বাগতম! ডেমো লেখা পোস্ট হয়েছে', 'success');
+        } else {
+           addToast('নতুন লেখা যুক্ত হয়েছে', 'success');
+        }
+      }
+
       // Data Migration Logic (One time)
       const localData = localStorage.getItem('lekhoni_articles');
       if (localData && fetchedArticles.length === 0) {
         try {
           const parsed = JSON.parse(localData) as Article[];
           if (parsed.length > 0) {
-            console.log("Migrating local data to Firebase...");
             parsed.forEach(async (article) => {
               await saveArticleToFirebase({
                 ...article,
@@ -129,7 +144,6 @@ export default function App() {
               });
             });
             localStorage.removeItem('lekhoni_articles');
-            addToast('লোকাল ডাটা ক্লাউডে আপলোড করা হয়েছে', 'success');
           }
         } catch (e) {
           console.error("Migration failed", e);
@@ -143,19 +157,6 @@ export default function App() {
       unsubscribeConfig();
     };
   }, []);
-
-  // Automatic Demo Data Seeding
-  useEffect(() => {
-    if (!isLoadingArticles && articles.length === 0) {
-      const hasSeeded = localStorage.getItem('saadwrites_demo_seeded');
-      if (!hasSeeded) {
-        console.log("Seeding demo articles automatically...");
-        handleLoadDemoData().then(() => {
-          localStorage.setItem('saadwrites_demo_seeded', 'true');
-        });
-      }
-    }
-  }, [isLoadingArticles, articles.length]);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -266,12 +267,6 @@ export default function App() {
       };
     }
   };
-
-  const handleManualLoadDemo = async () => {
-    if (window.confirm('আপনি কি ডেমো আর্টিকেলগুলো লোড করতে চান?')) {
-      await handleLoadDemoData();
-    }
-  }
 
   const handleSaveArticle = async (articleData: Article) => {
     try {
@@ -427,7 +422,6 @@ export default function App() {
             onShowToast={addToast}
             config={siteConfig}
             updateConfig={handleUpdateConfig}
-            onLoadDemoData={handleManualLoadDemo}
           />
         );
     }
@@ -441,7 +435,7 @@ export default function App() {
       toggleTheme={toggleTheme}
       onExportData={handleExportData}
       onImportData={handleImportData}
-      onLoadDemoData={handleManualLoadDemo}
+      onLoadDemoData={seedArticles}
       totalVisits={totalVisits}
       toasts={toasts}
       removeToast={removeToast}
