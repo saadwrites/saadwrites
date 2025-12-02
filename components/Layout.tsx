@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { PenTool, BookOpen, Mail, Download, Upload, User as UserIcon, Menu, X, PanelLeftClose, Eye, CheckCircle, AlertCircle, Info, Lock, Unlock, BarChart2, LogIn, LogOut } from 'lucide-react';
-import { ViewState, Toast, User } from '../types';
+import { PenTool, BookOpen, Mail, Download, Upload, User as UserIcon, Menu, X, PanelLeftClose, Eye, CheckCircle, AlertCircle, Info, Lock, Unlock, BarChart2, LogIn, LogOut, Image as ImageIcon } from 'lucide-react';
+import { ViewState, Toast, User, SiteConfig } from '../types';
+import { EditableText, EditableImage } from './Editable';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -17,6 +19,8 @@ interface LayoutProps {
   toggleAdmin: () => void;
   user: User | null;
   onLogout: () => void;
+  config: SiteConfig;
+  updateConfig: (c: Partial<SiteConfig>) => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ 
@@ -33,7 +37,9 @@ export const Layout: React.FC<LayoutProps> = ({
   isAdmin,
   toggleAdmin,
   user,
-  onLogout
+  onLogout,
+  config,
+  updateConfig
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -67,17 +73,17 @@ export const Layout: React.FC<LayoutProps> = ({
   };
 
   return (
-    <div className="h-[100dvh] w-full bg-cream dark:bg-[#0f0f0f] text-charcoal dark:text-stone-200 font-sans flex transition-colors duration-700 ease-in-out overflow-hidden relative selection:bg-gold/20">
+    <div className="h-[100dvh] w-full bg-cream dark:bg-[#0f0f0f] text-charcoal dark:text-stone-200 font-sans flex transition-colors duration-[800ms] ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden relative selection:bg-gold/20">
       
       {/* Toast Container */}
       <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
         {toasts.map(toast => (
           <div 
             key={toast.id}
-            className={`pointer-events-auto flex items-center gap-3 px-6 py-4 rounded-xl shadow-premium animate-slide-up min-w-[320px] backdrop-blur-md border ${
-              toast.type === 'success' ? 'bg-white/90 dark:bg-stone-900/90 border-green-500/20 text-charcoal dark:text-white' :
-              toast.type === 'error' ? 'bg-white/90 dark:bg-stone-900/90 border-red-500/20 text-charcoal dark:text-white' :
-              'bg-charcoal/90 text-white border-gold/20'
+            className={`pointer-events-auto flex items-center gap-3 px-6 py-4 rounded-lg shadow-premium animate-slide-up min-w-[320px] backdrop-blur-md border border-opacity-30 ${
+              toast.type === 'success' ? 'bg-white/80 dark:bg-stone-900/80 border-green-500 text-charcoal dark:text-white' :
+              toast.type === 'error' ? 'bg-white/80 dark:bg-stone-900/80 border-red-500 text-charcoal dark:text-white' :
+              'bg-charcoal/90 text-white border-gold/30'
             }`}
           >
             {toast.type === 'success' && <CheckCircle className="w-5 h-5 text-green-500" />}
@@ -101,7 +107,7 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* Mobile Overlay */}
       {isMobile && isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/40 z-[40] backdrop-blur-sm transition-all duration-500"
+          className="fixed inset-0 bg-black/20 z-[40] backdrop-blur-sm transition-all duration-700 ease-in-out"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -110,34 +116,66 @@ export const Layout: React.FC<LayoutProps> = ({
       <aside 
         className={`
           flex-shrink-0 z-[50] h-full
-          bg-white/80 dark:bg-[#161413]/90 backdrop-blur-xl
+          bg-white/70 dark:bg-[#161413]/80 backdrop-blur-2xl
           text-charcoal dark:text-stone-300
-          border-r border-stone-200/50 dark:border-stone-800/50
-          flex flex-col transition-all duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)]
-          ${isMobile ? 'fixed inset-y-0 left-0 shadow-2xl' : 'relative'}
+          border-r border-stone-200/40 dark:border-stone-800/40
+          flex flex-col transition-all duration-[800ms] ease-[cubic-bezier(0.2,0.8,0.2,1)]
+          ${isMobile ? 'fixed inset-y-0 left-0 shadow-premium' : 'relative'}
           ${isSidebarOpen 
-            ? 'translate-x-0 w-80' 
-            : '-translate-x-full md:translate-x-0 md:w-0 md:border-none md:overflow-hidden'}
+            ? 'translate-x-0 w-80 opacity-100' 
+            : '-translate-x-full md:translate-x-0 md:w-0 md:border-none md:overflow-hidden md:opacity-0'}
         `}
       >
         {/* Sidebar Header */}
-        <div className="p-8 pt-10 flex items-center justify-between whitespace-nowrap overflow-hidden flex-shrink-0 border-b border-stone-100/50 dark:border-stone-800/50">
-          <div className="animate-fade-in">
-            <h1 className="text-3xl font-kalpurush font-bold text-charcoal dark:text-stone-100 tracking-tight">SaadWrites</h1>
-            <p className="text-[10px] uppercase tracking-[0.25em] text-gold/80 mt-1 font-medium">শব্দ যেখানে কথা বলে</p>
+        <div className="p-8 pt-10 flex flex-col whitespace-nowrap overflow-hidden flex-shrink-0">
+          <div className="flex justify-between items-start">
+            <div className="animate-fade-in w-full">
+              {config.logoUrl ? (
+                <div className="mb-4 w-20 h-20">
+                   <EditableImage 
+                     src={config.logoUrl} 
+                     onSave={(url) => updateConfig({ logoUrl: url })} 
+                     isAdmin={isAdmin}
+                     className="w-full h-full object-contain"
+                   />
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 mb-1">
+                   {isAdmin && (
+                     <button title="Upload Logo" onClick={() => updateConfig({ logoUrl: 'https://via.placeholder.com/150' })} className="p-1 hover:bg-stone-200 rounded">
+                       <ImageIcon className="w-4 h-4 text-stone-400" />
+                     </button>
+                   )}
+                   <EditableText 
+                      value={config.siteName} 
+                      onSave={(val) => updateConfig({ siteName: val })} 
+                      isAdmin={isAdmin}
+                      className="text-3xl font-kalpurush font-bold text-charcoal dark:text-stone-100 tracking-tight"
+                   />
+                </div>
+              )}
+              
+              <EditableText 
+                 value={config.tagline} 
+                 onSave={(val) => updateConfig({ tagline: val })} 
+                 isAdmin={isAdmin}
+                 className="text-[10px] uppercase tracking-[0.25em] text-gold/80 mt-1 font-medium block"
+              />
+            </div>
+            
+            <button 
+              onClick={() => setIsSidebarOpen(false)}
+              className="text-stone-400 hover:text-charcoal dark:hover:text-white hidden md:block transition-colors"
+              title="মেনু লুকান"
+            >
+              <PanelLeftClose className="w-5 h-5 opacity-60 hover:opacity-100" />
+            </button>
           </div>
-          <button 
-            onClick={() => setIsSidebarOpen(false)}
-            className="text-stone-400 hover:text-charcoal dark:hover:text-white hidden md:block transition-colors"
-            title="মেনু লুকান"
-          >
-            <PanelLeftClose className="w-5 h-5 opacity-60 hover:opacity-100" />
-          </button>
         </div>
 
         {/* User Profile Section (If Logged In) */}
         {user && (
-          <div className="px-6 py-6 border-b border-stone-100/50 dark:border-stone-800/50 flex items-center gap-4 mx-2 animate-fade-in">
+          <div className="px-6 py-6 flex items-center gap-4 mx-2 animate-fade-in bg-stone-50/50 dark:bg-stone-900/30 rounded-lg mb-2">
             <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full border border-stone-200 dark:border-stone-700 object-cover" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-charcoal dark:text-white truncate">{user.name}</p>
@@ -147,7 +185,7 @@ export const Layout: React.FC<LayoutProps> = ({
         )}
 
         {/* Navigation Items */}
-        <nav className="flex-1 px-4 py-8 space-y-1.5 overflow-y-auto overflow-x-hidden whitespace-nowrap scrollbar-hide">
+        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto overflow-x-hidden whitespace-nowrap scrollbar-hide">
           <NavButton 
             active={currentView === ViewState.HOME} 
             onClick={() => handleNavClick(ViewState.HOME)} 
@@ -183,9 +221,9 @@ export const Layout: React.FC<LayoutProps> = ({
           {user && (
             <button
               onClick={onLogout}
-              className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-stone-500 dark:text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all duration-300 group"
+              className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-stone-500 dark:text-stone-400 hover:text-red-500 hover:bg-red-50/50 dark:hover:bg-red-900/10 transition-all duration-300 group"
             >
-              <span className="p-2 rounded-md bg-stone-100 dark:bg-stone-900 group-hover:bg-red-100 dark:group-hover:bg-red-900/30 transition-colors">
+              <span className="p-2 rounded-md bg-stone-100/50 dark:bg-stone-900/50 group-hover:bg-red-100/50 dark:group-hover:bg-red-900/20 transition-colors">
                 <LogOut className="w-4 h-4" />
               </span>
               <div className="text-left">
@@ -196,7 +234,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
           {isAdmin && (
             <>
-              <div className="my-6 border-t border-stone-100/50 dark:border-stone-800/50 mx-4"></div>
+              <div className="my-6 border-t border-stone-100/50 dark:border-stone-800/30 mx-4"></div>
               
               <NavButton 
                 active={currentView === ViewState.EDITOR} 
@@ -214,14 +252,14 @@ export const Layout: React.FC<LayoutProps> = ({
               />
 
               {/* Settings Section */}
-              <div className="pt-6 mt-6 border-t border-stone-100/50 dark:border-stone-800/50 mx-2 animate-fade-in">
+              <div className="pt-6 mt-6 border-t border-stone-100/50 dark:border-stone-800/30 mx-2 animate-fade-in">
                 <p className="px-4 text-[10px] font-bold text-stone-400 dark:text-stone-600 uppercase tracking-widest mb-3 flex items-center gap-2">
                   সেটিংস
                 </p>
                 
                 <button
                   onClick={() => { onExportData(); if(isMobile) setIsSidebarOpen(false); }}
-                  className="w-full flex items-center gap-4 px-4 py-2.5 rounded-lg text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800/50 transition-all duration-300 group"
+                  className="w-full flex items-center gap-4 px-4 py-2.5 rounded-lg text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-100/50 dark:hover:bg-stone-800/30 transition-all duration-300 group"
                 >
                   <Download className="w-4 h-4 shrink-0 group-hover:text-gold transition-colors" />
                   <span className="text-sm font-medium">ব্যাকআপ নিন</span>
@@ -229,7 +267,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
                 <button
                   onClick={handleImportClick}
-                  className="w-full flex items-center gap-4 px-4 py-2.5 rounded-lg text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800/50 transition-all duration-300 group"
+                  className="w-full flex items-center gap-4 px-4 py-2.5 rounded-lg text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-100/50 dark:hover:bg-stone-800/30 transition-all duration-300 group"
                 >
                   <Upload className="w-4 h-4 shrink-0 group-hover:text-gold transition-colors" />
                   <span className="text-sm font-medium">রিস্টোর করুন</span>
@@ -247,7 +285,7 @@ export const Layout: React.FC<LayoutProps> = ({
         </nav>
 
         {/* Footer with Stats */}
-        <div className="p-8 border-t border-stone-100/50 dark:border-stone-800/50 whitespace-nowrap overflow-hidden flex-shrink-0 bg-stone-50/50 dark:bg-[#161413]/50 transition-colors duration-700 ease-in-out space-y-4 relative backdrop-blur-sm">
+        <div className="p-8 border-t border-stone-100/50 dark:border-stone-800/30 whitespace-nowrap overflow-hidden flex-shrink-0 bg-stone-50/30 dark:bg-[#161413]/30 transition-colors duration-700 ease-in-out space-y-4 relative backdrop-blur-sm">
           {isAdmin && (
              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-stone-500 dark:text-stone-500 animate-fade-in">
                 <div className="flex items-center gap-2">
@@ -258,9 +296,13 @@ export const Layout: React.FC<LayoutProps> = ({
           )}
           
           <div className="flex justify-between items-end">
-             <p className="text-xs text-stone-400 dark:text-stone-600 font-serif italic">
-               &copy; {new Date().getFullYear()} SaadWrites.<br/>All rights reserved.
-             </p>
+             <div className="text-xs text-stone-400 dark:text-stone-600 font-serif italic">
+               <EditableText 
+                 value={config.footerText} 
+                 onSave={(val) => updateConfig({ footerText: val })} 
+                 isAdmin={isAdmin}
+               />
+             </div>
              <button 
                onClick={toggleAdmin}
                className="text-stone-300 hover:text-gold dark:text-stone-700 dark:hover:text-gold transition-colors p-1"
@@ -273,7 +315,7 @@ export const Layout: React.FC<LayoutProps> = ({
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 h-full overflow-y-auto bg-cream dark:bg-[#0f0f0f] transition-colors duration-700 ease-in-out w-full min-w-0 relative scroll-smooth">
+      <main className="flex-1 h-full overflow-y-auto bg-cream dark:bg-[#0f0f0f] transition-colors duration-[800ms] ease-[cubic-bezier(0.4,0,0.2,1)] w-full min-w-0 relative scroll-smooth">
         <div className="max-w-6xl mx-auto px-6 md:px-16 py-24 md:py-24 animate-fade-in">
           {children}
         </div>
@@ -287,18 +329,18 @@ const NavButton = ({ active, onClick, icon, label, subLabel }: { active: boolean
     onClick={onClick}
     className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-500 ease-out group border border-transparent ${
       active
-        ? 'bg-stone-100/80 dark:bg-stone-800/50 text-charcoal dark:text-white border-stone-200/50 dark:border-stone-700/50 shadow-sm'
-        : 'text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-800/30'
+        ? 'bg-stone-100/60 dark:bg-stone-800/40 text-charcoal dark:text-white border-stone-200/30 dark:border-stone-700/30 shadow-soft'
+        : 'text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-50/50 dark:hover:bg-stone-800/20'
     }`}
   >
-    <span className={`p-2 rounded-md transition-colors duration-300 ${active ? 'bg-gold text-white' : 'bg-stone-100 dark:bg-stone-900 group-hover:bg-stone-200 dark:group-hover:bg-stone-800'}`}>
+    <span className={`p-2 rounded-md transition-colors duration-500 ${active ? 'bg-gold/90 text-white' : 'bg-stone-100/50 dark:bg-stone-900/50 group-hover:bg-stone-200 dark:group-hover:bg-stone-800'}`}>
       {icon}
     </span>
     <div className="text-left">
-      <span className={`block text-sm font-bold font-kalpurush tracking-wide transition-colors duration-300 ${active ? 'text-charcoal dark:text-white' : 'text-stone-600 dark:text-stone-300 group-hover:text-charcoal dark:group-hover:text-white'}`}>
+      <span className={`block text-sm font-bold font-kalpurush tracking-wide transition-colors duration-500 ${active ? 'text-charcoal dark:text-white' : 'text-stone-600 dark:text-stone-300 group-hover:text-charcoal dark:group-hover:text-white'}`}>
         {label}
       </span>
-      {subLabel && <span className="text-[10px] text-stone-400 dark:text-stone-600 group-hover:text-stone-500 dark:group-hover:text-stone-500 transition-colors duration-300">{subLabel}</span>}
+      {subLabel && <span className="text-[10px] text-stone-400 dark:text-stone-600 group-hover:text-stone-500 dark:group-hover:text-stone-500 transition-colors duration-500">{subLabel}</span>}
     </div>
   </button>
 );

@@ -16,15 +16,16 @@ const firebaseConfig = {
 };
 
 // Check if the config is still using the placeholder
-export const isFirebaseConfigured = firebaseConfig.apiKey !== "AIzaSyDOCS_EXAMPLE_KEY_REPLACE_ME" && firebaseConfig.projectId !== "your-project-id";
+// This prevents the app from trying to connect to a non-existent project
+export const isFirebaseConfigured = firebaseConfig.projectId !== "your-project-id" && firebaseConfig.apiKey !== "AIzaSyDOCS_EXAMPLE_KEY_REPLACE_ME";
 
-// Initialize Firebase only if configured, otherwise create dummy objects to prevent crashes
+// Initialize Firebase only if configured
 const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : undefined;
-export const auth = isFirebaseConfigured ? getAuth(app) : undefined;
-export const db = isFirebaseConfigured ? getFirestore(app) : undefined;
+export const auth = isFirebaseConfigured && app ? getAuth(app) : undefined;
+export const db = isFirebaseConfigured && app ? getFirestore(app) : undefined;
 
 if (!isFirebaseConfigured) {
-  console.warn("Firebase is not configured. Falling back to LocalStorage mode.");
+  console.log("App running in Offline/Demo mode (LocalStorage). Add Firebase config to enable Cloud features.");
 }
 
 export default app;

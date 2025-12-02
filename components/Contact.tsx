@@ -1,7 +1,16 @@
+
 import React, { useState } from 'react';
 import { Send, Mail, User, MessageSquare, Phone, Copy, Check, ExternalLink } from 'lucide-react';
+import { SiteConfig } from '../types';
+import { EditableText } from './Editable';
 
-export const Contact: React.FC = () => {
+interface ContactProps {
+  config: SiteConfig;
+  updateConfig: (c: Partial<SiteConfig>) => void;
+  isAdmin: boolean;
+}
+
+export const Contact: React.FC<ContactProps> = ({ config, updateConfig, isAdmin }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -42,10 +51,16 @@ export const Contact: React.FC = () => {
                </div>
                <div className="flex-1 space-y-2">
                  <p className="text-xs font-bold uppercase tracking-widest text-stone-400">ইমেইল</p>
-                 <p className="font-serif text-lg text-charcoal dark:text-stone-200">abdullahsaadbd61@gmail.com</p>
+                 <div className="font-serif text-lg text-charcoal dark:text-stone-200">
+                    <EditableText 
+                      value={config.contactEmail} 
+                      onSave={(val) => updateConfig({ contactEmail: val })} 
+                      isAdmin={isAdmin}
+                    />
+                 </div>
                  <div className="flex gap-4 pt-2">
-                   <a href="mailto:abdullahsaadbd61@gmail.com" className="text-xs font-bold uppercase tracking-wide text-gold hover:underline">মেইল পাঠান</a>
-                   <button onClick={() => copyToClipboard('abdullahsaadbd61@gmail.com', 'email')} className="text-xs font-bold uppercase tracking-wide text-stone-400 hover:text-charcoal transition-colors">
+                   <a href={`mailto:${config.contactEmail}`} className="text-xs font-bold uppercase tracking-wide text-gold hover:underline">মেইল পাঠান</a>
+                   <button onClick={() => copyToClipboard(config.contactEmail, 'email')} className="text-xs font-bold uppercase tracking-wide text-stone-400 hover:text-charcoal transition-colors">
                      {copied === 'email' ? 'কপি হয়েছে' : 'কপি করুন'}
                    </button>
                  </div>
@@ -60,10 +75,16 @@ export const Contact: React.FC = () => {
                </div>
                <div className="flex-1 space-y-2">
                  <p className="text-xs font-bold uppercase tracking-widest text-stone-400">হোয়াটসঅ্যাপ</p>
-                 <p className="font-serif text-lg text-charcoal dark:text-stone-200 font-mono">+880 1883-672961</p>
+                 <div className="font-serif text-lg text-charcoal dark:text-stone-200 font-mono">
+                    <EditableText 
+                      value={config.contactPhone} 
+                      onSave={(val) => updateConfig({ contactPhone: val })} 
+                      isAdmin={isAdmin}
+                    />
+                 </div>
                  <div className="flex gap-4 pt-2">
-                   <a href="https://wa.me/8801883672961" target="_blank" rel="noopener noreferrer" className="text-xs font-bold uppercase tracking-wide text-green-600 hover:underline">মেসেজ দিন</a>
-                   <button onClick={() => copyToClipboard('+8801883672961', 'whatsapp')} className="text-xs font-bold uppercase tracking-wide text-stone-400 hover:text-charcoal transition-colors">
+                   <a href={`https://wa.me/${config.contactPhone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-xs font-bold uppercase tracking-wide text-green-600 hover:underline">মেসেজ দিন</a>
+                   <button onClick={() => copyToClipboard(config.contactPhone, 'whatsapp')} className="text-xs font-bold uppercase tracking-wide text-stone-400 hover:text-charcoal transition-colors">
                      {copied === 'whatsapp' ? 'কপি হয়েছে' : 'কপি করুন'}
                    </button>
                  </div>

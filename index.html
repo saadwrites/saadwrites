@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="bn">
   <head>
@@ -37,8 +38,8 @@
               }
             },
             animation: {
-              'fade-in': 'fadeIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)',
-              'slide-up': 'slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)',
+              'fade-in': 'fadeIn 1s cubic-bezier(0.2, 0.8, 0.2, 1)',
+              'slide-up': 'slideUp 1s cubic-bezier(0.2, 0.8, 0.2, 1)',
               'float': 'float 6s ease-in-out infinite',
             },
             keyframes: {
@@ -56,9 +57,9 @@
               }
             },
             boxShadow: {
-              'premium': '0 25px 50px -12px rgba(0, 0, 0, 0.08)',
-              'soft': '0 10px 30px -5px rgba(0, 0, 0, 0.04)',
-              'glow': '0 0 20px rgba(180, 83, 9, 0.15)',
+              'premium': '0 30px 60px -12px rgba(0, 0, 0, 0.08)',
+              'soft': '0 10px 40px -10px rgba(0, 0, 0, 0.03)',
+              'glow': '0 0 25px rgba(180, 83, 9, 0.12)',
             }
           }
         }
@@ -75,44 +76,46 @@
       body {
         background-color: #F5F2E9;
         color: #1c1917;
-        /* Ultra smooth transition for theme switching */
-        transition: background-color 0.7s cubic-bezier(0.4, 0, 0.2, 1), color 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Ultra smooth transition for theme switching with cubic-bezier */
+        transition: background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .dark body {
         background-color: #0f0f0f;
         color: #e5e5e5;
       }
       
-      /* Custom Premium Scrollbar */
+      /* Custom Premium Scrollbar - Slim & Smooth */
       ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
       }
       ::-webkit-scrollbar-track {
         background: transparent; 
       }
       ::-webkit-scrollbar-thumb {
-        background: #d6d3d1; 
-        border-radius: 10px;
-        border: 2px solid transparent;
-        background-clip: content-box;
+        background: rgba(120, 113, 108, 0.3); 
+        border-radius: 20px;
+        transition: background 0.3s ease;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #a8a29e; 
-        border: 2px solid transparent;
-        background-clip: content-box;
+        background: rgba(180, 83, 9, 0.5); 
       }
       .dark ::-webkit-scrollbar-thumb {
-        background: #44403c; 
+        background: rgba(68, 64, 60, 0.5); 
       }
       .dark ::-webkit-scrollbar-thumb:hover {
-        background: #57534e; 
+        background: rgba(180, 83, 9, 0.6); 
       }
 
       /* Premium text selection */
       ::selection {
-        background: rgba(180, 83, 9, 0.2); /* Gold with opacity */
+        background: rgba(180, 83, 9, 0.15);
         color: inherit;
+      }
+
+      /* Image loading smoothness */
+      img {
+        transition: opacity 0.5s ease-in-out;
       }
     </style>
   <script type="importmap">

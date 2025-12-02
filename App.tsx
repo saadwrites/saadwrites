@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Layout } from './components/Layout';
 import { Editor } from './components/Editor';
@@ -7,29 +8,39 @@ import { Contact } from './components/Contact';
 import { About } from './components/About';
 import { Insight } from './components/Insight';
 import { Login } from './components/Login';
-import { Article, ViewState, Comment, Toast, ToastType, User } from './types';
-import { subscribeToArticles, saveArticleToFirebase, deleteArticleFromFirebase, logoutUser, subscribeToAuthChanges } from './services/firebaseService';
+import { Article, ViewState, Comment, Toast, ToastType, User, SiteConfig } from './types';
+import { 
+  subscribeToArticles, 
+  saveArticleToFirebase, 
+  deleteArticleFromFirebase, 
+  logoutUser, 
+  subscribeToAuthChanges,
+  subscribeToConfig,
+  saveSiteConfig
+} from './services/firebaseService';
 
-// Initial dummy data for fallback
-const INITIAL_ARTICLES: Article[] = [
-  {
-    id: '1',
-    title: 'বৃষ্টির দিনে জানালার পাশে',
-    content: `আকাশটা আজ সকাল থেকেই ভার হয়ে আছে। মেঘের ঘনঘটা দেখে মনে হচ্ছে, প্রকৃতি আজ কাঁদবে। জানালার পাশে বসে আছি, হাতে ধোঁয়া ওঠা চায়ের কাপ। এমন দিনে পুরোনো স্মৃতিগুলো বড় বেশি নাড়া দেয়। \n\nছোটবেলার সেই কাগজের নৌকা ভাসানো, কাদা মাখা পায়ে বাড়ি ফেরা – সব যেন চোখের সামনে ভেসে উঠছে। বড় হওয়ার সাথে সাথে আমরা কত কিছু হারিয়ে ফেলি। সারল্য, নির্ভাবনা, আর সেই অকারণ আনন্দগুলো। \n\nবৃষ্টির রিমঝিম শব্দে এক অদ্ভুত সুর আছে। যেন কোনো এক অজানা বিষাদ আর আনন্দের সংমিশ্রণ। এই শব্দ শুনলে মনটা কোথায় যেন হারিয়ে যায়।`,
-    createdAt: Date.now() - 86400000 * 2,
-    tags: ['স্মৃতি', 'বৃষ্টি', 'প্রকৃতি'],
-    category: 'গল্প',
-    coverImage: 'https://picsum.photos/800/400?random=1',
-    comments: [],
-    status: 'published',
-    views: 124
-  }
-];
+// Default config if fetch fails or first load
+const INITIAL_CONFIG: SiteConfig = {
+  siteName: "SaadWrites",
+  tagline: "শব্দ যেখানে কথা বলে",
+  footerText: "© 2025 SaadWrites.",
+  contactEmail: "abdullahsaadbd61@gmail.com",
+  contactPhone: "+880 1883-672961",
+  contactAddress: "Kishoreganj, Bangladesh",
+  newsletterTitle: "সাহিত্য ও চিন্তার সাথে থাকুন",
+  newsletterDesc: "আমার নতুন লেখা, ভাবনা এবং আপডেটের খবর সবার আগে পেতে ইমেইল দিয়ে যুক্ত হোন। কোনো স্প্যাম নয়, শুধুই সাহিত্য।",
+  aboutName: "আব্দুল্লাহ সাআদ",
+  aboutBio: "আমি আব্দুল্লাহ সাআদ। আমার ধমনীতে কিশোরগঞ্জের পলিমাটির ঘ্রাণ, আর স্মৃতির পাতায় মেঘনা-বিধৌত নোয়াখালীর নোনা বাতাস...",
+  aboutLocation1: "কিশোরগঞ্জ",
+  aboutLocation2: "নোয়াখালী",
+  aboutTrait: "ভবঘুরে"
+};
 
 export default function App() {
   const [view, setView] = useState<ViewState>(ViewState.HOME);
   const [articles, setArticles] = useState<Article[]>([]);
   const [isLoadingArticles, setIsLoadingArticles] = useState(true);
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(INITIAL_CONFIG);
   
   const [activeArticle, setActiveArticle] = useState<Article | null>(null);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
@@ -70,13 +81,17 @@ export default function App() {
       setCurrentUser(user);
     });
 
+    // Config Subscription
+    const unsubscribeConfig = subscribeToConfig((config) => {
+      setSiteConfig(config);
+    });
+
     // Articles Subscription
     const unsubscribeArticles = subscribeToArticles((fetchedArticles) => {
       setArticles(fetchedArticles);
       setIsLoadingArticles(false);
 
-      // Data Migration: Check if we have local articles but remote is empty (first sync)
-      // Or just a one-time migration check
+      // Data Migration Logic (One time)
       const localData = localStorage.getItem('lekhoni_articles');
       if (localData && fetchedArticles.length === 0) {
         try {
@@ -90,7 +105,6 @@ export default function App() {
                 views: article.views || 0
               });
             });
-            // Clear local to avoid re-migration
             localStorage.removeItem('lekhoni_articles');
             addToast('লোকাল ডাটা ক্লাউডে আপলোড করা হয়েছে', 'success');
           }
@@ -103,6 +117,7 @@ export default function App() {
     return () => {
       unsubscribeAuth();
       unsubscribeArticles();
+      unsubscribeConfig();
     };
   }, []);
 
@@ -116,7 +131,7 @@ export default function App() {
     localStorage.setItem('saadwrites_theme', theme);
   }, [theme]);
 
-  // Persist total visits locally (simplification, real analytics should be in DB)
+  // Persist total visits locally
   useEffect(() => {
     localStorage.setItem('saadwrites_visits', totalVisits.toString());
   }, [totalVisits]);
@@ -137,8 +152,19 @@ export default function App() {
     });
   };
 
+  const handleUpdateConfig = async (updates: Partial<SiteConfig>) => {
+    if (!isAdmin) return;
+    const newConfig = { ...siteConfig, ...updates };
+    setSiteConfig(newConfig); // Optimistic update
+    try {
+      await saveSiteConfig(newConfig);
+      addToast('আপডেট সেভ হয়েছে', 'success');
+    } catch (e) {
+      addToast('সেভ করতে সমস্যা হয়েছে', 'error');
+    }
+  };
+
   const handleLogin = (user: User) => {
-    // State update handled by subscription
     addToast(`স্বাগতম, ${user.name}!`, 'success');
     setView(ViewState.HOME);
   };
@@ -217,13 +243,12 @@ export default function App() {
     try {
       await saveArticleToFirebase({
         ...articleData,
-        views: articleData.views || 0 // Ensure views are preserved or init
+        views: articleData.views || 0
       });
       
       setEditingArticle(null);
       addToast('লেখা ক্লাউডে সেভ হয়েছে', 'success');
       
-      // Clear session draft
       localStorage.removeItem('saadwrites_draft_content');
       localStorage.removeItem('saadwrites_draft_title');
       setView(ViewState.HOME);
@@ -234,14 +259,11 @@ export default function App() {
   };
 
   const handleSelectArticle = async (article: Article) => {
-    // Increment view counts locally and remotely
     const newViews = (article.views || 0) + 1;
     setTotalVisits(prev => prev + 1);
     
-    // Fire and forget update
     saveArticleToFirebase({ ...article, views: newViews }).catch(e => console.error(e));
     
-    // Update local state for immediate feedback
     setActiveArticle({ ...article, views: newViews });
     setView(ViewState.READER);
     window.scrollTo(0,0);
@@ -336,9 +358,21 @@ export default function App() {
           <div className="text-center p-10">কোনো লেখা পাওয়া যায়নি</div>
         );
       case ViewState.CONTACT:
-        return <Contact />;
+        return (
+          <Contact 
+            config={siteConfig}
+            updateConfig={handleUpdateConfig}
+            isAdmin={isAdmin}
+          />
+        );
       case ViewState.ABOUT:
-        return <About />;
+        return (
+          <About 
+            config={siteConfig}
+            updateConfig={handleUpdateConfig}
+            isAdmin={isAdmin}
+          />
+        );
       case ViewState.LOGIN:
         return <Login onLogin={handleLogin} />;
       case ViewState.HOME:
@@ -357,6 +391,8 @@ export default function App() {
             setSearchQuery={setSearchQuery}
             isAdmin={isAdmin}
             onShowToast={addToast}
+            config={siteConfig}
+            updateConfig={handleUpdateConfig}
           />
         );
     }
@@ -377,6 +413,8 @@ export default function App() {
       toggleAdmin={toggleAdmin}
       user={currentUser}
       onLogout={handleLogout}
+      config={siteConfig}
+      updateConfig={handleUpdateConfig}
     >
       {renderContent()}
     </Layout>

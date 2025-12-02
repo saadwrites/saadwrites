@@ -1,7 +1,8 @@
+
 import React, { useState, useMemo } from 'react';
-import { Article, ToastType } from '../types';
+import { Article, ToastType, SiteConfig } from '../types';
 import { ArrowRight, Search, Sun, Moon, Sparkles, Feather, FileText, Eye, Mail, Send } from 'lucide-react';
-import { Logo } from './Logo';
+import { EditableText, EditableImage } from './Editable';
 
 interface ArticleListProps {
   articles: Article[];
@@ -13,6 +14,8 @@ interface ArticleListProps {
   setSearchQuery: (q: string) => void;
   isAdmin: boolean;
   onShowToast: (msg: string, type: ToastType) => void;
+  config: SiteConfig;
+  updateConfig: (c: Partial<SiteConfig>) => void;
 }
 
 export const ArticleList: React.FC<ArticleListProps> = ({ 
@@ -24,7 +27,9 @@ export const ArticleList: React.FC<ArticleListProps> = ({
   searchQuery,
   setSearchQuery,
   isAdmin,
-  onShowToast
+  onShowToast,
+  config,
+  updateConfig
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('সব');
   const [email, setEmail] = useState('');
@@ -96,33 +101,48 @@ export const ArticleList: React.FC<ArticleListProps> = ({
   return (
     <div className="space-y-16 animate-fade-in max-w-5xl mx-auto pb-16">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-stone-200/50 dark:border-stone-800/50 pb-8 transition-colors duration-700 ease-in-out">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-stone-200/50 dark:border-stone-800/50 pb-8 transition-colors duration-[800ms] ease-in-out">
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-gold animate-slide-up">
             <Feather className="w-5 h-5" />
             <p className="text-xs font-bold uppercase tracking-[0.3em]">আমার চিন্তার জগৎ</p>
           </div>
-          <h1 className="text-5xl md:text-7xl font-kalpurush font-bold text-charcoal dark:text-stone-100 leading-tight transition-colors duration-700 ease-in-out">
-            SaadWrites
-          </h1>
+          
+          {config.logoUrl ? (
+            <div className="w-24 h-24 md:w-32 md:h-32">
+               <EditableImage 
+                  src={config.logoUrl} 
+                  onSave={(url) => updateConfig({ logoUrl: url })} 
+                  isAdmin={isAdmin} 
+                  className="w-full h-full object-contain"
+                />
+            </div>
+          ) : (
+            <EditableText 
+               value={config.siteName} 
+               onSave={(val) => updateConfig({ siteName: val })} 
+               isAdmin={isAdmin}
+               className="text-5xl md:text-7xl font-kalpurush font-bold text-charcoal dark:text-stone-100 leading-tight transition-colors duration-[800ms] block"
+            />
+          )}
         </div>
         
         <div className="flex items-center gap-4">
            {/* Search Box */}
            <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 group-focus-within:text-gold transition-colors" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 group-focus-within:text-gold transition-colors duration-500" />
             <input
               type="text"
               placeholder="অনুসন্ধান..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full md:w-64 bg-white/50 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-800 rounded-full py-2.5 pl-10 pr-6 text-sm text-charcoal dark:text-stone-200 placeholder-stone-400 focus:outline-none focus:border-gold dark:focus:border-gold focus:ring-1 focus:ring-gold transition-all duration-500 ease-out shadow-sm backdrop-blur-sm"
+              className="w-full md:w-64 bg-white/40 dark:bg-stone-900/30 border border-stone-200/60 dark:border-stone-800 rounded-full py-2.5 pl-10 pr-6 text-sm text-charcoal dark:text-stone-200 placeholder-stone-400 focus:outline-none focus:border-gold dark:focus:border-gold focus:ring-1 focus:ring-gold transition-all duration-500 ease-out shadow-sm backdrop-blur-sm"
             />
           </div>
 
           <button
             onClick={toggleTheme}
-            className="p-3 rounded-full bg-white/50 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-800 text-stone-500 dark:text-stone-400 hover:text-gold dark:hover:text-gold hover:border-gold dark:hover:border-gold transition-all duration-500 ease-out shadow-sm backdrop-blur-sm"
+            className="p-3 rounded-full bg-white/40 dark:bg-stone-900/30 border border-stone-200/60 dark:border-stone-800 text-stone-500 dark:text-stone-400 hover:text-gold dark:hover:text-gold hover:border-gold dark:hover:border-gold transition-all duration-500 ease-out shadow-sm backdrop-blur-sm"
             title={theme === 'light' ? 'ডার্ক মোড' : 'লাইট মোড'}
           >
             {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
@@ -131,7 +151,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
       </div>
 
       {/* Category Filters */}
-      <div className="flex gap-8 overflow-x-auto pb-4 no-scrollbar border-b border-stone-200/50 dark:border-stone-800/30 transition-colors duration-700">
+      <div className="flex gap-8 overflow-x-auto pb-4 no-scrollbar border-b border-transparent">
         {categories.map((cat) => (
           <button
             key={cat}
@@ -143,7 +163,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
             }`}
           >
             {cat}
-            <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-gold transform origin-left transition-transform duration-500 ease-out ${selectedCategory === cat ? 'scale-x-100' : 'scale-x-0'}`}></span>
+            <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-gold transform origin-left transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${selectedCategory === cat ? 'scale-x-100' : 'scale-x-0'}`}></span>
           </button>
         ))}
         {hasDrafts && isAdmin && (
@@ -157,7 +177,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
            >
              <FileText className="w-3 h-3" />
              খসড়া
-             <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-gold transform origin-left transition-transform duration-500 ease-out ${selectedCategory === 'খসড়া' ? 'scale-x-100' : 'scale-x-0'}`}></span>
+             <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-gold transform origin-left transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${selectedCategory === 'খসড়া' ? 'scale-x-100' : 'scale-x-0'}`}></span>
            </button>
         )}
       </div>
@@ -165,11 +185,11 @@ export const ArticleList: React.FC<ArticleListProps> = ({
       {/* Article Grid */}
       {articles.length === 0 ? (
         <div className="text-center py-40 animate-fade-in">
-          <div className="w-20 h-20 bg-stone-100 dark:bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-6 text-stone-300 dark:text-stone-600 transition-colors duration-700">
+          <div className="w-20 h-20 bg-stone-100 dark:bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-6 text-stone-300 dark:text-stone-600 transition-colors duration-[800ms]">
             <Sparkles className="w-10 h-10" />
           </div>
-          <h3 className="text-2xl font-kalpurush font-bold text-stone-800 dark:text-stone-200 mb-3 transition-colors duration-700">এখনো কিছু লেখা হয়নি</h3>
-          <p className="text-stone-500 dark:text-stone-400 mb-8 font-serif transition-colors duration-700">আপনার চিন্তার ডায়েরিটি শূন্য। আজই নতুন কিছু লিখুন।</p>
+          <h3 className="text-2xl font-kalpurush font-bold text-stone-800 dark:text-stone-200 mb-3 transition-colors duration-[800ms]">এখনো কিছু লেখা হয়নি</h3>
+          <p className="text-stone-500 dark:text-stone-400 mb-8 font-serif transition-colors duration-[800ms]">আপনার চিন্তার ডায়েরিটি শূন্য। আজই নতুন কিছু লিখুন।</p>
           {isAdmin && (
             <button 
               onClick={onNewArticle}
@@ -185,7 +205,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
             <div 
               key={article.id} 
               onClick={() => onSelectArticle(article)}
-              className={`group cursor-pointer bg-white dark:bg-[#161413] rounded-sm shadow-premium hover:shadow-2xl hover:-translate-y-1 transition-all duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] overflow-hidden flex flex-col md:flex-row ${article.status === 'draft' ? 'border-l-4 border-gold' : 'border border-transparent dark:border-stone-800/50'}`}
+              className={`group cursor-pointer bg-white dark:bg-[#161413] rounded-sm shadow-soft hover:shadow-premium hover:-translate-y-2 transition-all duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] overflow-hidden flex flex-col md:flex-row ${article.status === 'draft' ? 'border-l-4 border-gold' : 'border border-transparent dark:border-stone-800/40'}`}
             >
               {article.coverImage && (
                 <div className="w-full md:w-[380px] h-64 md:h-auto overflow-hidden relative shrink-0">
@@ -201,7 +221,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
                 </div>
               )}
               
-              <div className="flex-1 p-8 md:p-10 flex flex-col justify-center space-y-5">
+              <div className="flex-1 p-8 md:p-12 flex flex-col justify-center space-y-5">
                 <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-gold/80 group-hover:text-gold transition-colors duration-500">
                   <span>{article.category}</span>
                   <span className="w-1 h-1 rounded-full bg-stone-300"></span>
@@ -241,7 +261,7 @@ export const ArticleList: React.FC<ArticleListProps> = ({
       )}
 
       {/* Newsletter Subscription Section */}
-      <div className="bg-charcoal dark:bg-stone-900 rounded-sm p-8 md:p-12 text-center relative overflow-hidden shadow-2xl mt-24 group transition-colors duration-700">
+      <div className="bg-charcoal dark:bg-stone-900 rounded-sm p-8 md:p-12 text-center relative overflow-hidden shadow-premium mt-24 group transition-colors duration-[800ms]">
         <div className="absolute top-0 left-0 w-full h-1 bg-gold"></div>
         
         {/* Decorative Background */}
@@ -254,10 +274,22 @@ export const ArticleList: React.FC<ArticleListProps> = ({
            </div>
            
            <div>
-             <h3 className="text-3xl md:text-4xl font-kalpurush font-bold text-white mb-3 tracking-wide">সাহিত্য ও চিন্তার সাথে থাকুন</h3>
-             <p className="text-stone-300 font-serif text-lg leading-relaxed opacity-90">
-               আমার নতুন লেখা, ভাবনা এবং আপডেটের খবর সবার আগে পেতে ইমেইল দিয়ে যুক্ত হোন। কোনো স্প্যাম নয়, শুধুই সাহিত্য।
-             </p>
+             <div className="mb-3">
+               <EditableText 
+                 value={config.newsletterTitle} 
+                 onSave={(val) => updateConfig({ newsletterTitle: val })} 
+                 isAdmin={isAdmin}
+                 className="text-3xl md:text-4xl font-kalpurush font-bold text-white tracking-wide"
+               />
+             </div>
+             <div className="text-stone-300 font-serif text-lg leading-relaxed opacity-90">
+               <EditableText 
+                 value={config.newsletterDesc} 
+                 onSave={(val) => updateConfig({ newsletterDesc: val })} 
+                 isAdmin={isAdmin}
+                 multiline
+               />
+             </div>
            </div>
            
            <form onSubmit={handleSubscribe} className="flex flex-col md:flex-row gap-4 mt-8">

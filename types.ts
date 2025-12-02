@@ -1,3 +1,4 @@
+
 export interface Comment {
   id: string;
   author: string;
@@ -57,4 +58,27 @@ export interface Toast {
   id: string;
   message: string;
   type: ToastType;
+}
+
+export interface SiteConfig {
+  siteName: string;
+  tagline: string;
+  logoUrl?: string; // If user uploads a custom image
+  footerText: string;
+  
+  // Contact Info
+  contactEmail: string;
+  contactPhone: string;
+  contactAddress: string; // Not strictly used in UI yet but good to have
+  
+  // Newsletter
+  newsletterTitle: string;
+  newsletterDesc: string;
+  
+  // About Page Defaults
+  aboutName: string;
+  aboutBio: string;
+  aboutLocation1: string; // Kishoreganj
+  aboutLocation2: string; // Noakhali
+  aboutTrait: string; // Bhavoghure
 }
