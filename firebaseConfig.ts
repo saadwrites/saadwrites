@@ -1,3 +1,4 @@
+
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
@@ -14,8 +15,16 @@ const firebaseConfig = {
   appId: "1:1234567890:web:abcdef123456"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Check if the config is still using the placeholder
+export const isFirebaseConfigured = firebaseConfig.apiKey !== "AIzaSyDOCS_EXAMPLE_KEY_REPLACE_ME" && firebaseConfig.projectId !== "your-project-id";
+
+// Initialize Firebase only if configured, otherwise create dummy objects to prevent crashes
+const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : undefined;
+export const auth = isFirebaseConfigured ? getAuth(app) : undefined;
+export const db = isFirebaseConfigured ? getFirestore(app) : undefined;
+
+if (!isFirebaseConfigured) {
+  console.warn("Firebase is not configured. Falling back to LocalStorage mode.");
+}
+
 export default app;

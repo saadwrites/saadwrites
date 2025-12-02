@@ -153,7 +153,7 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
   return (
     <div className="max-w-4xl mx-auto animate-fade-in pb-24">
       {/* Top Action Bar */}
-      <div className="flex justify-between items-center mb-12 sticky top-0 bg-cream/90 dark:bg-[#0f0f0f]/90 backdrop-blur z-20 py-6 border-b border-stone-200/50 dark:border-stone-800">
+      <div className="flex justify-between items-center mb-12 sticky top-0 bg-cream/90 dark:bg-[#0f0f0f]/90 backdrop-blur z-20 py-6 border-b border-stone-200/50 dark:border-stone-800 transition-colors duration-700 ease-in-out">
         <button 
           onClick={onCancel}
           className="text-stone-500 hover:text-charcoal dark:hover:text-stone-200 text-sm font-bold uppercase tracking-wider transition-colors"
@@ -182,7 +182,7 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
         {/* Cover Image Upload */}
         <div className="group relative">
           {coverImage ? (
-            <div className="relative w-full h-80 md:h-[450px] rounded-sm shadow-xl overflow-hidden bg-stone-100 dark:bg-stone-800">
+            <div className="relative w-full h-80 md:h-[450px] rounded-sm shadow-xl overflow-hidden bg-stone-100 dark:bg-stone-800 transition-colors duration-700">
               <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/10"></div>
               <button 
@@ -193,7 +193,7 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
               </button>
             </div>
           ) : (
-            <label className="flex flex-col items-center justify-center h-48 w-full border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-lg hover:border-gold dark:hover:border-gold hover:bg-white/50 dark:hover:bg-stone-800/50 cursor-pointer transition-all gap-3 text-stone-400 hover:text-gold group">
+            <label className="flex flex-col items-center justify-center h-48 w-full border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-lg hover:border-gold dark:hover:border-gold hover:bg-white/50 dark:hover:bg-stone-800/50 cursor-pointer transition-all gap-3 text-stone-400 hover:text-gold group duration-700">
               <div className="p-3 bg-stone-100 dark:bg-stone-800 rounded-full group-hover:bg-gold/10 transition-colors">
                 <ImageIcon className="w-6 h-6" />
               </div>
@@ -209,18 +209,18 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
           placeholder="শিরোনাম..."
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full text-5xl md:text-7xl font-kalpurush font-bold bg-transparent border-none placeholder-stone-300 dark:placeholder-stone-700 focus:ring-0 focus:outline-none text-charcoal dark:text-stone-50 p-0 leading-tight"
+          className="w-full text-5xl md:text-7xl font-kalpurush font-bold bg-transparent border-none placeholder-stone-300 dark:placeholder-stone-700 focus:ring-0 focus:outline-none text-charcoal dark:text-stone-50 p-0 leading-tight transition-colors duration-700"
         />
 
         {/* Minimal Toolbar */}
-        <div className="flex flex-wrap items-center gap-6 text-stone-400 border-y border-stone-200 dark:border-stone-800 py-4 sticky top-24 z-10 bg-cream dark:bg-[#0f0f0f] transition-colors">
+        <div className="flex flex-wrap items-center gap-6 text-stone-400 border-y border-stone-200 dark:border-stone-800 py-4 sticky top-24 z-10 bg-cream dark:bg-[#0f0f0f] transition-colors duration-700 ease-in-out">
           <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-stone-200 dark:border-stone-800 hover:border-gold transition-colors">
             <FolderOpen className="w-4 h-4 text-gold" />
             {!showNewCatInput ? (
               <select 
                 value={category}
                 onChange={handleCategoryChange}
-                className="bg-transparent border-none text-xs font-bold uppercase tracking-wider text-charcoal dark:text-stone-300 focus:ring-0 cursor-pointer p-0 pr-6 focus:outline-none"
+                className="bg-transparent border-none text-xs font-bold uppercase tracking-wider text-charcoal dark:text-stone-300 focus:ring-0 cursor-pointer p-0 pr-6 focus:outline-none transition-colors duration-700"
               >
                 {availableCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                 <option value="__NEW__" className="text-gold font-bold">+ নতুন</option>
@@ -241,7 +241,7 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
             )}
           </div>
 
-          <div className="h-6 w-px bg-stone-300 dark:bg-stone-700"></div>
+          <div className="h-6 w-px bg-stone-300 dark:bg-stone-700 transition-colors duration-700"></div>
 
           <div className="flex gap-2">
             <button onClick={() => insertFormatting('**', '**')} className="p-2 hover:text-charcoal dark:hover:text-white hover:bg-stone-200 dark:hover:bg-stone-800 rounded transition-colors" title="Bold"><Bold className="w-4 h-4" /></button>
@@ -249,7 +249,7 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
             <button onClick={() => insertFormatting('\n- ', '')} className="p-2 hover:text-charcoal dark:hover:text-white hover:bg-stone-200 dark:hover:bg-stone-800 rounded transition-colors" title="List"><List className="w-4 h-4" /></button>
           </div>
 
-          <div className="h-6 w-px bg-stone-300 dark:bg-stone-700"></div>
+          <div className="h-6 w-px bg-stone-300 dark:bg-stone-700 transition-colors duration-700"></div>
 
           {/* Stats */}
           <div className="flex gap-4 text-xs font-bold uppercase tracking-wider text-stone-500 hidden md:flex">
@@ -282,16 +282,16 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
           placeholder="আপনার গল্প শুরু করুন..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="w-full min-h-[60vh] text-xl md:text-2xl leading-[2] text-charcoal dark:text-stone-300 bg-transparent border-none resize-none focus:ring-0 focus:outline-none font-serif placeholder-stone-300 dark:placeholder-stone-700 p-0"
+          className="w-full min-h-[60vh] text-xl md:text-2xl leading-[2] text-charcoal dark:text-stone-300 bg-transparent border-none resize-none focus:ring-0 focus:outline-none font-serif placeholder-stone-300 dark:placeholder-stone-700 p-0 transition-colors duration-700"
         />
 
-        <div className="pt-8 border-t border-stone-200 dark:border-stone-800">
+        <div className="pt-8 border-t border-stone-200 dark:border-stone-800 transition-colors duration-700">
            <input 
              type="text" 
              placeholder="#ট্যাগ (যেমন: ভ্রমণ, স্মৃতি)"
              value={tags}
              onChange={(e) => setTags(e.target.value)}
-             className="w-full bg-transparent text-base font-medium text-stone-600 dark:text-stone-400 focus:outline-none placeholder-stone-300 dark:placeholder-stone-700 border-none p-0"
+             className="w-full bg-transparent text-base font-medium text-stone-600 dark:text-stone-400 focus:outline-none placeholder-stone-300 dark:placeholder-stone-700 border-none p-0 transition-colors duration-700"
            />
         </div>
       </div>

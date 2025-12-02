@@ -67,24 +67,24 @@ export const Layout: React.FC<LayoutProps> = ({
   };
 
   return (
-    <div className="h-[100dvh] w-full bg-cream dark:bg-[#0f0f0f] text-charcoal dark:text-stone-200 font-sans flex transition-colors duration-500 overflow-hidden relative">
+    <div className="h-[100dvh] w-full bg-cream dark:bg-[#0f0f0f] text-charcoal dark:text-stone-200 font-sans flex transition-colors duration-700 ease-in-out overflow-hidden relative selection:bg-gold/20">
       
       {/* Toast Container */}
       <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
         {toasts.map(toast => (
           <div 
             key={toast.id}
-            className={`pointer-events-auto flex items-center gap-3 px-6 py-4 rounded-lg shadow-2xl animate-slide-up min-w-[300px] border-l-4 ${
-              toast.type === 'success' ? 'bg-white dark:bg-stone-900 border-green-500 text-charcoal dark:text-white' :
-              toast.type === 'error' ? 'bg-white dark:bg-stone-900 border-red-500 text-charcoal dark:text-white' :
-              'bg-charcoal text-white border-gold'
+            className={`pointer-events-auto flex items-center gap-3 px-6 py-4 rounded-xl shadow-premium animate-slide-up min-w-[320px] backdrop-blur-md border ${
+              toast.type === 'success' ? 'bg-white/90 dark:bg-stone-900/90 border-green-500/20 text-charcoal dark:text-white' :
+              toast.type === 'error' ? 'bg-white/90 dark:bg-stone-900/90 border-red-500/20 text-charcoal dark:text-white' :
+              'bg-charcoal/90 text-white border-gold/20'
             }`}
           >
             {toast.type === 'success' && <CheckCircle className="w-5 h-5 text-green-500" />}
             {toast.type === 'error' && <AlertCircle className="w-5 h-5 text-red-500" />}
             {toast.type === 'info' && <Info className="w-5 h-5 text-gold" />}
-            <p className="text-sm font-bold font-sans">{toast.message}</p>
-            <button onClick={() => removeToast(toast.id)} className="ml-auto text-stone-400 hover:text-charcoal dark:hover:text-white"><X className="w-4 h-4" /></button>
+            <p className="text-sm font-bold font-sans tracking-wide">{toast.message}</p>
+            <button onClick={() => removeToast(toast.id)} className="ml-auto text-stone-400 hover:text-charcoal dark:hover:text-white transition-colors"><X className="w-4 h-4" /></button>
           </div>
         ))}
       </div>
@@ -92,7 +92,7 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* Floating Toggle Button */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className={`fixed top-6 left-6 z-[60] text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 transition-all duration-300 ${isSidebarOpen && !isMobile ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        className={`fixed top-6 left-6 z-[60] text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 transition-all duration-500 ${isSidebarOpen && !isMobile ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
         title="মেনু"
       >
         {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -101,7 +101,7 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* Mobile Overlay */}
       {isMobile && isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/60 z-[40] backdrop-blur-sm transition-opacity duration-300"
+          className="fixed inset-0 bg-black/40 z-[40] backdrop-blur-sm transition-all duration-500"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -110,44 +110,44 @@ export const Layout: React.FC<LayoutProps> = ({
       <aside 
         className={`
           flex-shrink-0 z-[50] h-full
-          bg-white dark:bg-[#1c1917] 
+          bg-white/80 dark:bg-[#161413]/90 backdrop-blur-xl
           text-charcoal dark:text-stone-300
-          border-r border-stone-200 dark:border-stone-800 shadow-2xl
-          flex flex-col transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]
-          ${isMobile ? 'fixed inset-y-0 left-0' : 'relative'}
+          border-r border-stone-200/50 dark:border-stone-800/50
+          flex flex-col transition-all duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)]
+          ${isMobile ? 'fixed inset-y-0 left-0 shadow-2xl' : 'relative'}
           ${isSidebarOpen 
             ? 'translate-x-0 w-80' 
             : '-translate-x-full md:translate-x-0 md:w-0 md:border-none md:overflow-hidden'}
         `}
       >
         {/* Sidebar Header */}
-        <div className="p-8 pt-10 flex items-center justify-between whitespace-nowrap overflow-hidden flex-shrink-0 border-b border-stone-100 dark:border-stone-800">
-          <div>
-            <h1 className="text-2xl font-kalpurush font-bold text-charcoal dark:text-stone-100">SaadWrites</h1>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-gold mt-1">শব্দ যেখানে কথা বলে</p>
+        <div className="p-8 pt-10 flex items-center justify-between whitespace-nowrap overflow-hidden flex-shrink-0 border-b border-stone-100/50 dark:border-stone-800/50">
+          <div className="animate-fade-in">
+            <h1 className="text-3xl font-kalpurush font-bold text-charcoal dark:text-stone-100 tracking-tight">SaadWrites</h1>
+            <p className="text-[10px] uppercase tracking-[0.25em] text-gold/80 mt-1 font-medium">শব্দ যেখানে কথা বলে</p>
           </div>
           <button 
             onClick={() => setIsSidebarOpen(false)}
             className="text-stone-400 hover:text-charcoal dark:hover:text-white hidden md:block transition-colors"
             title="মেনু লুকান"
           >
-            <PanelLeftClose className="w-5 h-5" />
+            <PanelLeftClose className="w-5 h-5 opacity-60 hover:opacity-100" />
           </button>
         </div>
 
         {/* User Profile Section (If Logged In) */}
         {user && (
-          <div className="px-4 py-6 border-b border-stone-100 dark:border-stone-800 flex items-center gap-4 mx-2">
-            <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full border-2 border-gold shadow-sm object-cover" />
+          <div className="px-6 py-6 border-b border-stone-100/50 dark:border-stone-800/50 flex items-center gap-4 mx-2 animate-fade-in">
+            <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full border border-stone-200 dark:border-stone-700 object-cover" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-charcoal dark:text-white truncate">{user.name}</p>
-              <p className="text-xs text-stone-400 truncate">{user.email}</p>
+              <p className="text-[10px] text-stone-400 truncate uppercase tracking-wider">{user.email}</p>
             </div>
           </div>
         )}
 
         {/* Navigation Items */}
-        <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto overflow-x-hidden whitespace-nowrap scrollbar-hide">
+        <nav className="flex-1 px-4 py-8 space-y-1.5 overflow-y-auto overflow-x-hidden whitespace-nowrap scrollbar-hide">
           <NavButton 
             active={currentView === ViewState.HOME} 
             onClick={() => handleNavClick(ViewState.HOME)} 
@@ -185,18 +185,18 @@ export const Layout: React.FC<LayoutProps> = ({
               onClick={onLogout}
               className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-stone-500 dark:text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all duration-300 group"
             >
-              <span className="p-2 rounded-md bg-stone-200 dark:bg-stone-900 group-hover:bg-red-100 dark:group-hover:bg-red-900/30 transition-colors">
+              <span className="p-2 rounded-md bg-stone-100 dark:bg-stone-900 group-hover:bg-red-100 dark:group-hover:bg-red-900/30 transition-colors">
                 <LogOut className="w-4 h-4" />
               </span>
               <div className="text-left">
-                <span className="block text-sm font-bold font-kalpurush tracking-wide group-hover:text-red-500">লগআউট</span>
+                <span className="block text-sm font-bold font-kalpurush tracking-wide group-hover:text-red-500 transition-colors">লগআউট</span>
               </div>
             </button>
           )}
 
           {isAdmin && (
             <>
-              <div className="my-6 border-t border-stone-100 dark:border-stone-800 mx-2"></div>
+              <div className="my-6 border-t border-stone-100/50 dark:border-stone-800/50 mx-4"></div>
               
               <NavButton 
                 active={currentView === ViewState.EDITOR} 
@@ -214,14 +214,14 @@ export const Layout: React.FC<LayoutProps> = ({
               />
 
               {/* Settings Section */}
-              <div className="pt-6 mt-6 border-t border-stone-100 dark:border-stone-800 mx-2">
-                <p className="px-4 text-[10px] font-bold text-stone-400 dark:text-stone-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <div className="pt-6 mt-6 border-t border-stone-100/50 dark:border-stone-800/50 mx-2 animate-fade-in">
+                <p className="px-4 text-[10px] font-bold text-stone-400 dark:text-stone-600 uppercase tracking-widest mb-3 flex items-center gap-2">
                   সেটিংস
                 </p>
                 
                 <button
                   onClick={() => { onExportData(); if(isMobile) setIsSidebarOpen(false); }}
-                  className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-300 group"
+                  className="w-full flex items-center gap-4 px-4 py-2.5 rounded-lg text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800/50 transition-all duration-300 group"
                 >
                   <Download className="w-4 h-4 shrink-0 group-hover:text-gold transition-colors" />
                   <span className="text-sm font-medium">ব্যাকআপ নিন</span>
@@ -229,7 +229,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
                 <button
                   onClick={handleImportClick}
-                  className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-all duration-300 group"
+                  className="w-full flex items-center gap-4 px-4 py-2.5 rounded-lg text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800/50 transition-all duration-300 group"
                 >
                   <Upload className="w-4 h-4 shrink-0 group-hover:text-gold transition-colors" />
                   <span className="text-sm font-medium">রিস্টোর করুন</span>
@@ -247,13 +247,13 @@ export const Layout: React.FC<LayoutProps> = ({
         </nav>
 
         {/* Footer with Stats */}
-        <div className="p-8 border-t border-stone-100 dark:border-stone-800 whitespace-nowrap overflow-hidden flex-shrink-0 bg-stone-50 dark:bg-[#161413] transition-colors space-y-4 relative">
+        <div className="p-8 border-t border-stone-100/50 dark:border-stone-800/50 whitespace-nowrap overflow-hidden flex-shrink-0 bg-stone-50/50 dark:bg-[#161413]/50 transition-colors duration-700 ease-in-out space-y-4 relative backdrop-blur-sm">
           {isAdmin && (
              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-stone-500 dark:text-stone-500 animate-fade-in">
                 <div className="flex items-center gap-2">
                   <Eye className="w-3 h-3" /> মোট পাঠক
                 </div>
-                <span className="text-gold">{totalVisits.toLocaleString()}</span>
+                <span className="text-gold font-sans">{totalVisits.toLocaleString()}</span>
              </div>
           )}
           
@@ -263,18 +263,18 @@ export const Layout: React.FC<LayoutProps> = ({
              </p>
              <button 
                onClick={toggleAdmin}
-               className="text-stone-300 hover:text-gold dark:text-stone-700 dark:hover:text-gold transition-colors"
+               className="text-stone-300 hover:text-gold dark:text-stone-700 dark:hover:text-gold transition-colors p-1"
                title={isAdmin ? "রিডার মোড চালু করুন" : "এডিটর মোড চালু করুন"}
              >
-               {isAdmin ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+               {isAdmin ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
              </button>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 h-full overflow-y-auto bg-cream dark:bg-[#0f0f0f] transition-colors duration-500 w-full min-w-0 relative scroll-smooth">
-        <div className="max-w-6xl mx-auto px-6 md:px-16 py-24 md:py-24">
+      <main className="flex-1 h-full overflow-y-auto bg-cream dark:bg-[#0f0f0f] transition-colors duration-700 ease-in-out w-full min-w-0 relative scroll-smooth">
+        <div className="max-w-6xl mx-auto px-6 md:px-16 py-24 md:py-24 animate-fade-in">
           {children}
         </div>
       </main>
@@ -285,20 +285,20 @@ export const Layout: React.FC<LayoutProps> = ({
 const NavButton = ({ active, onClick, icon, label, subLabel }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, subLabel?: string }) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-300 group border border-transparent ${
+    className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-500 ease-out group border border-transparent ${
       active
-        ? 'bg-stone-100 dark:bg-stone-800 text-charcoal dark:text-white border-stone-200 dark:border-stone-700 shadow-sm'
-        : 'text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-800/50'
+        ? 'bg-stone-100/80 dark:bg-stone-800/50 text-charcoal dark:text-white border-stone-200/50 dark:border-stone-700/50 shadow-sm'
+        : 'text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-800/30'
     }`}
   >
-    <span className={`p-2 rounded-md transition-colors ${active ? 'bg-gold text-white' : 'bg-stone-200 dark:bg-stone-900 group-hover:bg-stone-300 dark:group-hover:bg-stone-700'}`}>
+    <span className={`p-2 rounded-md transition-colors duration-300 ${active ? 'bg-gold text-white' : 'bg-stone-100 dark:bg-stone-900 group-hover:bg-stone-200 dark:group-hover:bg-stone-800'}`}>
       {icon}
     </span>
     <div className="text-left">
-      <span className={`block text-sm font-bold font-kalpurush tracking-wide ${active ? 'text-charcoal dark:text-white' : 'text-stone-600 dark:text-stone-300 group-hover:text-charcoal dark:group-hover:text-white'}`}>
+      <span className={`block text-sm font-bold font-kalpurush tracking-wide transition-colors duration-300 ${active ? 'text-charcoal dark:text-white' : 'text-stone-600 dark:text-stone-300 group-hover:text-charcoal dark:group-hover:text-white'}`}>
         {label}
       </span>
-      {subLabel && <span className="text-[10px] text-stone-400 dark:text-stone-600 group-hover:text-stone-500 dark:group-hover:text-stone-500">{subLabel}</span>}
+      {subLabel && <span className="text-[10px] text-stone-400 dark:text-stone-600 group-hover:text-stone-500 dark:group-hover:text-stone-500 transition-colors duration-300">{subLabel}</span>}
     </div>
   </button>
 );
