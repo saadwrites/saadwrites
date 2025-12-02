@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Edit3, Check, X, Upload } from 'lucide-react';
+import { Edit3, Check, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 
 interface EditableTextProps {
   value: string;
@@ -129,8 +129,16 @@ export const EditableImage: React.FC<EditableImageProps> = ({
     }
   };
 
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm("আপনি কি নিশ্চিত যে এই ছবিটি মুছে ফেলতে চান?")) {
+      onSave('');
+    }
+  };
+
   if (!isAdmin) {
-    return src ? <img src={src} alt="content" className={className} /> : <div className={className}>{fallbackIcon}</div>;
+    if (!src) return null;
+    return <img src={src} alt="content" className={className} />;
   }
 
   return (
@@ -139,16 +147,28 @@ export const EditableImage: React.FC<EditableImageProps> = ({
       onClick={() => fileInputRef.current?.click()}
     >
       {src ? (
-        <img src={src} alt="editable" className="w-full h-full object-cover" />
+        <>
+          <img src={src} alt="editable" className="w-full h-full object-cover" />
+          <button 
+            onClick={handleDelete}
+            className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:scale-110 shadow-md"
+            title="ছবি মুছে ফেলুন"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
+        </>
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-stone-100 dark:bg-stone-800 text-stone-400">
-           {fallbackIcon || <Upload className="w-6 h-6" />}
+        <div className="w-full h-full flex items-center justify-center bg-stone-100 dark:bg-stone-800 text-stone-400 border border-dashed border-stone-300 dark:border-stone-700 hover:border-gold transition-colors">
+           {fallbackIcon || <Upload className="w-5 h-5" />}
         </div>
       )}
       
-      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-        <Upload className="w-6 h-6 text-white" />
-      </div>
+      {src && (
+        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
+          <Upload className="w-6 h-6 text-white" />
+        </div>
+      )}
+      
       <input 
         type="file" 
         ref={fileInputRef} 

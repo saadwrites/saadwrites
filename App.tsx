@@ -18,6 +18,7 @@ import {
   subscribeToConfig,
   saveSiteConfig
 } from './services/firebaseService';
+import { DEMO_ARTICLES } from './demoData';
 
 // Default config if fetch fails or first load
 const INITIAL_CONFIG: SiteConfig = {
@@ -30,7 +31,7 @@ const INITIAL_CONFIG: SiteConfig = {
   newsletterTitle: "সাহিত্য ও চিন্তার সাথে থাকুন",
   newsletterDesc: "আমার নতুন লেখা, ভাবনা এবং আপডেটের খবর সবার আগে পেতে ইমেইল দিয়ে যুক্ত হোন। কোনো স্প্যাম নয়, শুধুই সাহিত্য।",
   aboutName: "আব্দুল্লাহ সাআদ",
-  aboutBio: "আমি আব্দুল্লাহ সাআদ। আমার ধমনীতে কিশোরগঞ্জের পলিমাটির ঘ্রাণ, আর স্মৃতির পাতায় মেঘনা-বিধৌত নোয়াখালীর নোনা বাতাস...",
+  aboutBio: "আমি আব্দুল্লাহ সাআদ। আমার ধমনীতে কিশোরগঞ্জের পলিমাটির ঘ্রাণ, আর স্মৃতির পাতায় মেঘনা-বিধৌত নোয়াখালীর নোনা বাতাস। জন্ম ও শৈশবের সোনালী দিনগুলো কেটেছে কিশোরগঞ্জের মায়াবী পরিবেশে। পরবর্তীতে বেড়ে ওঠা এবং বিদ্যার্জনের পাঠ চুকিয়েছি নোয়াখালীর ব্যস্ত জনপদে। স্বভাবে আমি কিছুটা ভবঘুরে, আর খানিকটা হেয়ালি। ধরাবাঁধা জীবনের ছক কষতে আমার ভালো লাগে না; বরং অজানাকে জানার, অচেনাকে চেনার নেশায় আমি খুঁজে ফিরি জীবনের ভিন্ন অর্থ। আমার লেখায় উঠে আসে এই ভবঘুরে জীবনের গল্প, প্রকৃতির প্রেম আর মানুষের মনের অব্যক্ত কথা।",
   aboutLocation1: "কিশোরগঞ্জ",
   aboutLocation2: "নোয়াখালী",
   aboutTrait: "ভবঘুরে"
@@ -73,6 +74,28 @@ export default function App() {
     }
     return 'light';
   });
+
+  // Helper to show toast
+  const addToast = (message: string, type: ToastType = 'info') => {
+    const id = Date.now().toString();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 3000);
+  };
+
+  const handleLoadDemoData = async () => {
+    try {
+      const promises = DEMO_ARTICLES.map(article => saveArticleToFirebase(article));
+      await Promise.all(promises);
+      addToast('ডেমো ডাটা সফলভাবে লোড হয়েছে!', 'success');
+      setView(ViewState.HOME);
+      // Force refresh logic if needed, but subscription should handle it
+    } catch (error) {
+      console.error(error);
+      addToast('ডেমো ডাটা লোড করতে সমস্যা হয়েছে', 'error');
+    }
+  };
 
   // Firebase Subscriptions
   useEffect(() => {
@@ -120,6 +143,19 @@ export default function App() {
       unsubscribeConfig();
     };
   }, []);
+
+  // Automatic Demo Data Seeding
+  useEffect(() => {
+    if (!isLoadingArticles && articles.length === 0) {
+      const hasSeeded = localStorage.getItem('saadwrites_demo_seeded');
+      if (!hasSeeded) {
+        console.log("Seeding demo articles automatically...");
+        handleLoadDemoData().then(() => {
+          localStorage.setItem('saadwrites_demo_seeded', 'true');
+        });
+      }
+    }
+  }, [isLoadingArticles, articles.length]);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -178,14 +214,6 @@ export default function App() {
     }
   };
 
-  const addToast = (message: string, type: ToastType = 'info') => {
-    const id = Date.now().toString();
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 3000);
-  };
-
   const removeToast = (id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
@@ -238,6 +266,12 @@ export default function App() {
       };
     }
   };
+
+  const handleManualLoadDemo = async () => {
+    if (window.confirm('আপনি কি ডেমো আর্টিকেলগুলো লোড করতে চান?')) {
+      await handleLoadDemoData();
+    }
+  }
 
   const handleSaveArticle = async (articleData: Article) => {
     try {
@@ -318,7 +352,7 @@ export default function App() {
 
   const renderContent = () => {
     if (isLoadingArticles) {
-      return <div className="flex h-screen items-center justify-center text-gold font-kalpurush text-xl">লোড হচ্ছে...</div>;
+      return <div className="flex h-screen items-center justify-center text-gold font-kalpurush text-xl animate-pulse">লোড হচ্ছে...</div>;
     }
 
     switch (view) {
@@ -393,6 +427,7 @@ export default function App() {
             onShowToast={addToast}
             config={siteConfig}
             updateConfig={handleUpdateConfig}
+            onLoadDemoData={handleManualLoadDemo}
           />
         );
     }
@@ -406,6 +441,7 @@ export default function App() {
       toggleTheme={toggleTheme}
       onExportData={handleExportData}
       onImportData={handleImportData}
+      onLoadDemoData={handleManualLoadDemo}
       totalVisits={totalVisits}
       toasts={toasts}
       removeToast={removeToast}

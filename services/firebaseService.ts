@@ -1,13 +1,14 @@
 
 import { auth, db, isFirebaseConfigured } from '../firebaseConfig';
 import { signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
-import { collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, getDoc } from "firebase/firestore";
+import { collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, getDoc, addDoc, getDocs } from "firebase/firestore";
 import { Article, User, SiteConfig } from '../types';
 
 // --- LocalStorage Helpers for Fallback Mode ---
 const STORAGE_KEY_ARTICLES = 'saadwrites_articles';
 const STORAGE_KEY_USER = 'saadwrites_user';
 const STORAGE_KEY_CONFIG = 'saadwrites_site_config';
+const STORAGE_KEY_SUBSCRIBERS = 'saadwrites_subscribers';
 
 const DEFAULT_CONFIG: SiteConfig = {
   siteName: "SaadWrites",
@@ -100,6 +101,43 @@ export const subscribeToConfig = (callback: (config: SiteConfig) => void) => {
   }
 };
 
+// --- Newsletter Operations ---
+
+export const subscribeToNewsletter = async (email: string) => {
+  const subData = { email, subscribedAt: Date.now() };
+  if (isFirebaseConfigured && db) {
+    try {
+      await addDoc(collection(db, "newsletter_subscribers"), subData);
+    } catch (error) {
+      console.error("Newsletter save failed, fallback local", error);
+      saveLocalSubscriber(subData);
+    }
+  } else {
+    saveLocalSubscriber(subData);
+  }
+};
+
+const saveLocalSubscriber = (sub: { email: string, subscribedAt: number }) => {
+  const subs = JSON.parse(localStorage.getItem(STORAGE_KEY_SUBSCRIBERS) || '[]');
+  subs.push(sub);
+  localStorage.setItem(STORAGE_KEY_SUBSCRIBERS, JSON.stringify(subs));
+};
+
+export const getSubscribers = async () => {
+  if (isFirebaseConfigured && db) {
+    try {
+      const q = query(collection(db, "newsletter_subscribers"), orderBy("subscribedAt", "desc"));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => doc.data() as { email: string, subscribedAt: number });
+    } catch (e) {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_SUBSCRIBERS) || '[]');
+    }
+  } else {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY_SUBSCRIBERS) || '[]');
+  }
+};
+
+
 // --- Auth Operations ---
 
 export const loginWithGoogle = async (): Promise<User> => {
@@ -127,7 +165,6 @@ export const loginWithGoogle = async (): Promise<User> => {
     await new Promise(resolve => setTimeout(resolve, 800));
     
     // Force reload/notify mechanism would go here, but app relies on subscription
-    // We can manually trigger a window event for the app to pick up
     window.dispatchEvent(new Event('storage'));
     
     return mockUser;
@@ -160,7 +197,6 @@ export const subscribeToAuthChanges = (callback: (user: User | null) => void) =>
     };
     checkLocalAuth();
     
-    // Listen for storage events (e.g. logging out in another tab or manual trigger)
     const handler = () => checkLocalAuth();
     window.addEventListener('storage', handler);
     return () => window.removeEventListener('storage', handler);

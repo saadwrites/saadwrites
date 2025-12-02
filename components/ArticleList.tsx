@@ -1,8 +1,9 @@
 
 import React, { useState, useMemo } from 'react';
 import { Article, ToastType, SiteConfig } from '../types';
-import { ArrowRight, Search, Sun, Moon, Sparkles, Feather, FileText, Eye, Mail, Send } from 'lucide-react';
+import { ArrowRight, Search, Sun, Moon, Sparkles, Feather, FileText, Eye, Mail, Send, Image as ImageIcon } from 'lucide-react';
 import { EditableText, EditableImage } from './Editable';
+import { subscribeToNewsletter } from '../services/firebaseService';
 
 interface ArticleListProps {
   articles: Article[];
@@ -85,17 +86,21 @@ export const ArticleList: React.FC<ArticleListProps> = ({
     });
   };
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
     
     setIsSubscribing(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await subscribeToNewsletter(email);
       onShowToast('নিউজলেটার সাবস্ক্রিপশন সফল হয়েছে! স্বাগতম।', 'success');
       setEmail('');
+    } catch (err) {
+      console.error(err);
+      onShowToast('সাবস্ক্রিপশনে সমস্যা হয়েছে। পরে আবার চেষ্টা করুন।', 'error');
+    } finally {
       setIsSubscribing(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -103,28 +108,35 @@ export const ArticleList: React.FC<ArticleListProps> = ({
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-stone-200/50 dark:border-stone-800/50 pb-8 transition-colors duration-[800ms] ease-in-out">
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-gold animate-slide-up">
-            <Feather className="w-5 h-5" />
-            <p className="text-xs font-bold uppercase tracking-[0.3em]">আমার চিন্তার জগৎ</p>
+          <div className="flex items-center gap-6">
+             {/* Logo Section */}
+             {(config.logoUrl || isAdmin) && (
+               <div className="w-20 h-20 md:w-24 md:h-24 shrink-0">
+                  <EditableImage 
+                      src={config.logoUrl} 
+                      onSave={(url) => updateConfig({ logoUrl: url })} 
+                      isAdmin={isAdmin} 
+                      className="w-full h-full object-contain"
+                      fallbackIcon={<ImageIcon className="w-8 h-8 text-stone-300" />}
+                    />
+               </div>
+             )}
+             
+             {/* Text Section */}
+             <div className="space-y-2">
+               <div className="flex items-center gap-2 text-gold animate-slide-up">
+                 <Feather className="w-5 h-5" />
+                 <p className="text-xs font-bold uppercase tracking-[0.3em]">আমার চিন্তার জগৎ</p>
+               </div>
+               
+               <EditableText 
+                  value={config.siteName} 
+                  onSave={(val) => updateConfig({ siteName: val })} 
+                  isAdmin={isAdmin}
+                  className="text-5xl md:text-7xl font-kalpurush font-bold text-charcoal dark:text-stone-100 leading-tight transition-colors duration-[800ms] block"
+               />
+             </div>
           </div>
-          
-          {config.logoUrl ? (
-            <div className="w-24 h-24 md:w-32 md:h-32">
-               <EditableImage 
-                  src={config.logoUrl} 
-                  onSave={(url) => updateConfig({ logoUrl: url })} 
-                  isAdmin={isAdmin} 
-                  className="w-full h-full object-contain"
-                />
-            </div>
-          ) : (
-            <EditableText 
-               value={config.siteName} 
-               onSave={(val) => updateConfig({ siteName: val })} 
-               isAdmin={isAdmin}
-               className="text-5xl md:text-7xl font-kalpurush font-bold text-charcoal dark:text-stone-100 leading-tight transition-colors duration-[800ms] block"
-            />
-          )}
         </div>
         
         <div className="flex items-center gap-4">

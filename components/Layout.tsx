@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { PenTool, BookOpen, Mail, Download, Upload, User as UserIcon, Menu, X, PanelLeftClose, Eye, CheckCircle, AlertCircle, Info, Lock, Unlock, BarChart2, LogIn, LogOut, Image as ImageIcon } from 'lucide-react';
+import { PenTool, BookOpen, Mail, Download, Upload, User as UserIcon, Menu, X, PanelLeftClose, Eye, CheckCircle, AlertCircle, Info, Lock, Unlock, BarChart2, LogIn, LogOut, Image as ImageIcon, Database } from 'lucide-react';
 import { ViewState, Toast, User, SiteConfig } from '../types';
 import { EditableText, EditableImage } from './Editable';
 
@@ -12,6 +12,7 @@ interface LayoutProps {
   toggleTheme: () => void;
   onExportData: () => void;
   onImportData: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onLoadDemoData: () => void;
   totalVisits: number;
   toasts: Toast[];
   removeToast: (id: string) => void;
@@ -31,6 +32,7 @@ export const Layout: React.FC<LayoutProps> = ({
   toggleTheme,
   onExportData,
   onImportData,
+  onLoadDemoData,
   totalVisits,
   toasts,
   removeToast,
@@ -130,42 +132,42 @@ export const Layout: React.FC<LayoutProps> = ({
         <div className="p-8 pt-10 flex flex-col whitespace-nowrap overflow-hidden flex-shrink-0">
           <div className="flex justify-between items-start">
             <div className="animate-fade-in w-full">
-              {config.logoUrl ? (
-                <div className="mb-4 w-20 h-20">
-                   <EditableImage 
-                     src={config.logoUrl} 
-                     onSave={(url) => updateConfig({ logoUrl: url })} 
-                     isAdmin={isAdmin}
-                     className="w-full h-full object-contain"
-                   />
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 mb-1">
-                   {isAdmin && (
-                     <button title="Upload Logo" onClick={() => updateConfig({ logoUrl: 'https://via.placeholder.com/150' })} className="p-1 hover:bg-stone-200 rounded">
-                       <ImageIcon className="w-4 h-4 text-stone-400" />
-                     </button>
-                   )}
-                   <EditableText 
-                      value={config.siteName} 
-                      onSave={(val) => updateConfig({ siteName: val })} 
+              {/* Flexible Logo + Text Layout */}
+              <div className="flex flex-col gap-4">
+                 {/* Logo Container - Only occupies space if present or admin */}
+                 {(config.logoUrl || isAdmin) && (
+                   <div className="w-16 h-16 self-start">
+                      <EditableImage 
+                        src={config.logoUrl} 
+                        onSave={(url) => updateConfig({ logoUrl: url })} 
+                        isAdmin={isAdmin}
+                        className="w-full h-full object-contain"
+                        fallbackIcon={<ImageIcon className="w-6 h-6 text-stone-300"/>}
+                      />
+                   </div>
+                 )}
+                 
+                 {/* Site Name and Tagline - Always visible */}
+                 <div>
+                    <EditableText 
+                        value={config.siteName} 
+                        onSave={(val) => updateConfig({ siteName: val })} 
+                        isAdmin={isAdmin}
+                        className="text-3xl font-kalpurush font-bold text-charcoal dark:text-stone-100 tracking-tight block"
+                    />
+                    <EditableText 
+                      value={config.tagline} 
+                      onSave={(val) => updateConfig({ tagline: val })} 
                       isAdmin={isAdmin}
-                      className="text-3xl font-kalpurush font-bold text-charcoal dark:text-stone-100 tracking-tight"
-                   />
-                </div>
-              )}
-              
-              <EditableText 
-                 value={config.tagline} 
-                 onSave={(val) => updateConfig({ tagline: val })} 
-                 isAdmin={isAdmin}
-                 className="text-[10px] uppercase tracking-[0.25em] text-gold/80 mt-1 font-medium block"
-              />
+                      className="text-[10px] uppercase tracking-[0.25em] text-gold/80 mt-1 font-medium block"
+                    />
+                 </div>
+              </div>
             </div>
             
             <button 
               onClick={() => setIsSidebarOpen(false)}
-              className="text-stone-400 hover:text-charcoal dark:hover:text-white hidden md:block transition-colors"
+              className="text-stone-400 hover:text-charcoal dark:hover:text-white hidden md:block transition-colors -mt-2"
               title="মেনু লুকান"
             >
               <PanelLeftClose className="w-5 h-5 opacity-60 hover:opacity-100" />
@@ -279,6 +281,14 @@ export const Layout: React.FC<LayoutProps> = ({
                   className="hidden" 
                   accept=".json"
                 />
+
+                <button
+                  onClick={() => { onLoadDemoData(); if(isMobile) setIsSidebarOpen(false); }}
+                  className="w-full flex items-center gap-4 px-4 py-2.5 rounded-lg text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-100/50 dark:hover:bg-stone-800/30 transition-all duration-300 group"
+                >
+                  <Database className="w-4 h-4 shrink-0 group-hover:text-gold transition-colors" />
+                  <span className="text-sm font-medium">ডেমো ডাটা লোড করুন</span>
+                </button>
               </div>
             </>
           )}

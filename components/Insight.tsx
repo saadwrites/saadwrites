@@ -1,6 +1,8 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Article } from '../types';
-import { BarChart, Users, FileText, MessageCircle, TrendingUp, Eye, PenTool } from 'lucide-react';
+import { BarChart, Users, FileText, MessageCircle, TrendingUp, Eye, PenTool, Mail } from 'lucide-react';
+import { getSubscribers } from '../services/firebaseService';
 
 interface InsightProps {
   articles: Article[];
@@ -16,6 +18,17 @@ export const Insight: React.FC<InsightProps> = ({ articles, totalVisits }) => {
     const words = curr.content.trim().split(/\s+/).filter(Boolean).length;
     return acc + words;
   }, 0);
+
+  // Subscribers state
+  const [subscribers, setSubscribers] = useState<{email: string, subscribedAt: number}[]>([]);
+
+  useEffect(() => {
+    const fetchSubscribers = async () => {
+      const data = await getSubscribers();
+      setSubscribers(data);
+    };
+    fetchSubscribers();
+  }, []);
 
   // Sort by views for popular list
   const popularArticles = [...publishedArticles]
@@ -66,39 +79,71 @@ export const Insight: React.FC<InsightProps> = ({ articles, totalVisits }) => {
         />
       </div>
 
-      {/* Popular Articles Section */}
-      <div className="bg-white dark:bg-[#161413] rounded-sm shadow-xl border border-stone-100 dark:border-stone-800 overflow-hidden">
-        <div className="p-8 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center">
-          <h3 className="text-2xl font-kalpurush font-bold text-charcoal dark:text-stone-100">জনপ্রিয় লেখা</h3>
-          <BarChart className="w-5 h-5 text-stone-400" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Popular Articles Section */}
+        <div className="bg-white dark:bg-[#161413] rounded-sm shadow-xl border border-stone-100 dark:border-stone-800 overflow-hidden">
+          <div className="p-8 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center">
+            <h3 className="text-2xl font-kalpurush font-bold text-charcoal dark:text-stone-100">জনপ্রিয় লেখা</h3>
+            <BarChart className="w-5 h-5 text-stone-400" />
+          </div>
+          <div className="divide-y divide-stone-100 dark:divide-stone-800 max-h-[400px] overflow-y-auto">
+            {popularArticles.length > 0 ? (
+              popularArticles.map((article, index) => (
+                <div key={article.id} className="p-6 flex items-center justify-between hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors group">
+                  <div className="flex items-center gap-6">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg font-serif shrink-0 ${
+                      index === 0 ? 'bg-gold text-white' : 
+                      index === 1 ? 'bg-stone-300 text-charcoal' :
+                      index === 2 ? 'bg-stone-200 text-charcoal' :
+                      'bg-stone-100 dark:bg-stone-800 text-stone-500'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div>
+                      <h4 className="font-bold font-kalpurush text-lg text-charcoal dark:text-stone-200 group-hover:text-gold transition-colors">{article.title}</h4>
+                      <p className="text-xs text-stone-400 uppercase tracking-wider mt-1">{article.category} • {new Date(article.createdAt).toLocaleDateString('bn-BD')}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-stone-500 font-medium">
+                    <Eye className="w-4 h-4" />
+                    {article.views?.toLocaleString() || 0}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-10 text-center text-stone-400 font-serif italic">কোনো ডাটা পাওয়া যায়নি</div>
+            )}
+          </div>
         </div>
-        <div className="divide-y divide-stone-100 dark:divide-stone-800">
-          {popularArticles.length > 0 ? (
-            popularArticles.map((article, index) => (
-              <div key={article.id} className="p-6 flex items-center justify-between hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors group">
-                <div className="flex items-center gap-6">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg font-serif shrink-0 ${
-                    index === 0 ? 'bg-gold text-white' : 
-                    index === 1 ? 'bg-stone-300 text-charcoal' :
-                    index === 2 ? 'bg-stone-200 text-charcoal' :
-                    'bg-stone-100 dark:bg-stone-800 text-stone-500'
-                  }`}>
-                    {index + 1}
-                  </div>
-                  <div>
-                    <h4 className="font-bold font-kalpurush text-lg text-charcoal dark:text-stone-200 group-hover:text-gold transition-colors">{article.title}</h4>
-                    <p className="text-xs text-stone-400 uppercase tracking-wider mt-1">{article.category} • {new Date(article.createdAt).toLocaleDateString('bn-BD')}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-stone-500 font-medium">
-                  <Eye className="w-4 h-4" />
-                  {article.views?.toLocaleString() || 0}
-                </div>
-              </div>
-            ))
-          ) : (
-             <div className="p-10 text-center text-stone-400 font-serif italic">কোনো ডাটা পাওয়া যায়নি</div>
-          )}
+
+        {/* Newsletter Subscribers Section */}
+        <div className="bg-white dark:bg-[#161413] rounded-sm shadow-xl border border-stone-100 dark:border-stone-800 overflow-hidden">
+          <div className="p-8 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center">
+            <h3 className="text-2xl font-kalpurush font-bold text-charcoal dark:text-stone-100">সাবস্ক্রাইবার তালিকা ({subscribers.length})</h3>
+            <Mail className="w-5 h-5 text-stone-400" />
+          </div>
+          <div className="divide-y divide-stone-100 dark:divide-stone-800 max-h-[400px] overflow-y-auto">
+             {subscribers.length > 0 ? (
+                <table className="w-full text-left">
+                  <thead className="bg-stone-50 dark:bg-stone-900 sticky top-0">
+                    <tr>
+                      <th className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-stone-400">ইমেইল</th>
+                      <th className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-stone-400">তারিখ</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
+                    {subscribers.map((sub, index) => (
+                      <tr key={index} className="hover:bg-stone-50 dark:hover:bg-stone-800/50">
+                        <td className="px-6 py-4 text-sm font-medium text-charcoal dark:text-stone-200">{sub.email}</td>
+                        <td className="px-6 py-4 text-sm text-stone-500 dark:text-stone-400">{new Date(sub.subscribedAt).toLocaleDateString('bn-BD')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+             ) : (
+                <div className="p-10 text-center text-stone-400 font-serif italic">এখনো কোনো সাবস্ক্রাইবার নেই</div>
+             )}
+          </div>
         </div>
       </div>
     </div>
