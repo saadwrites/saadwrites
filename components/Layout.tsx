@@ -123,7 +123,7 @@ export const Layout: React.FC<LayoutProps> = ({
         {/* Sidebar Header */}
         <div className="p-8 pt-10 flex items-center justify-between whitespace-nowrap overflow-hidden flex-shrink-0 border-b border-stone-100 dark:border-stone-800">
           <div>
-            <h1 className="text-3xl font-bold font-kalpurush tracking-wide text-charcoal dark:text-white">saadwrites</h1>
+            <h1 className="text-2xl font-kalpurush font-bold text-charcoal dark:text-stone-100">SaadWrites</h1>
             <p className="text-[10px] uppercase tracking-[0.2em] text-gold mt-1">শব্দ যেখানে কথা বলে</p>
           </div>
           <button 
@@ -141,7 +141,7 @@ export const Layout: React.FC<LayoutProps> = ({
             <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full border-2 border-gold shadow-sm object-cover" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-charcoal dark:text-white truncate">{user.name}</p>
-              <p className="text-[10px] text-stone-400 truncate">{user.email}</p>
+              <p className="text-xs text-stone-400 truncate">{user.email}</p>
             </div>
           </div>
         )}

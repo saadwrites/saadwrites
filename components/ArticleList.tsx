@@ -101,9 +101,9 @@ export const ArticleList: React.FC<ArticleListProps> = ({
             <Feather className="w-5 h-5" />
             <p className="text-xs font-bold uppercase tracking-[0.3em]">আমার চিন্তার জগৎ</p>
           </div>
-          <h2 className="text-5xl md:text-6xl font-kalpurush font-bold text-charcoal dark:text-stone-100 tracking-tight">
+          <h1 className="text-5xl md:text-7xl font-kalpurush font-bold text-charcoal dark:text-stone-100 leading-tight">
             SaadWrites
-          </h2>
+          </h1>
         </div>
         
         <div className="flex items-center gap-4">
