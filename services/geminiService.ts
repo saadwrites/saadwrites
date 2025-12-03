@@ -36,6 +36,21 @@ export const generateWritingAssistance = async (
     case 'ideas':
       fullPrompt = `Based on this draft title or concept: "${prompt}", suggest 5 creative outlines or directions for a blog post or story.`;
       break;
+    case 'tone_formal':
+      fullPrompt = `Rewrite the following text in a formal, professional, and sophisticated tone:\n\n${currentText}`;
+      break;
+    case 'tone_casual':
+      fullPrompt = `Rewrite the following text in a casual, conversational, and friendly tone:\n\n${currentText}`;
+      break;
+    case 'tone_literary':
+      fullPrompt = `Rewrite the following text in a highly literary, poetic, and artistic tone suitable for high-quality literature:\n\n${currentText}`;
+      break;
+    case 'style_concise':
+      fullPrompt = `Rewrite the following text to be more concise, removing unnecessary words while keeping the core message:\n\n${currentText}`;
+      break;
+    case 'style_descriptive':
+      fullPrompt = `Rewrite the following text to be more descriptive, adding vivid imagery, sensory details, and metaphors:\n\n${currentText}`;
+      break;
     default:
       fullPrompt = `${prompt}\n\nContext text:\n${currentText}`;
   }

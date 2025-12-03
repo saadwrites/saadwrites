@@ -139,9 +139,12 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
     setShowAiMenu(false);
     try {
       const result = await generateWritingAssistance(task === 'ideas' ? title : '', content, task);
-      if (task === 'grammar' || task === 'expand') setContent(prev => prev + '\n\n' + result);
-      else if (task === 'ideas') setContent(prev => prev + '\n\n--- আইডিয়া সমূহ ---\n' + result);
-      else if (task === 'summarize') alert('সারসংক্ষেপ:\n' + result); 
+      if (task === 'ideas') {
+        setContent(prev => prev + '\n\n--- আইডিয়া সমূহ ---\n' + result);
+      } else {
+        // Appending result for all other tasks (grammar, expand, styles, tones)
+        setContent(prev => prev + '\n\n' + result);
+      }
       onShowToast('এআই জেনারেশন সম্পন্ন হয়েছে', 'success');
     } catch (error) {
       onShowToast('এআই সেবা সংযোগে সমস্যা হচ্ছে', 'error');
@@ -267,10 +270,20 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
                {isGenerating ? 'চিন্তা করছে...' : 'এআই সাহায্য'}
              </button>
              {showAiMenu && (
-                <div className="absolute top-full right-0 mt-3 w-56 bg-white dark:bg-stone-900 rounded-lg shadow-premium border border-stone-100 dark:border-stone-700 overflow-hidden z-30 py-2">
+                <div className="absolute top-full right-0 mt-3 w-64 bg-white dark:bg-stone-900 rounded-lg shadow-premium border border-stone-100 dark:border-stone-700 overflow-hidden z-30 py-2 max-h-96 overflow-y-auto">
+                  <div className="px-5 py-2 text-[10px] font-bold uppercase tracking-widest text-stone-400 bg-stone-50 dark:bg-stone-900/50">সাধারণ</div>
                   <button onClick={() => handleAiAssist('grammar')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">ব্যাকরণ ঠিক করুন</button>
                   <button onClick={() => handleAiAssist('expand')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">লেখা বড় করুন</button>
                   <button onClick={() => handleAiAssist('ideas')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">আইডিয়া দিন</button>
+                  
+                  <div className="px-5 py-2 text-[10px] font-bold uppercase tracking-widest text-stone-400 bg-stone-50 dark:bg-stone-900/50 border-t border-stone-100 dark:border-stone-800">শৈলী (Style)</div>
+                  <button onClick={() => handleAiAssist('style_concise')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">সংক্ষিপ্ত করুন</button>
+                  <button onClick={() => handleAiAssist('style_descriptive')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">বর্ণনামূলক করুন</button>
+
+                  <div className="px-5 py-2 text-[10px] font-bold uppercase tracking-widest text-stone-400 bg-stone-50 dark:bg-stone-900/50 border-t border-stone-100 dark:border-stone-800">সুর (Tone)</div>
+                  <button onClick={() => handleAiAssist('tone_literary')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">সাহিত্যিক</button>
+                  <button onClick={() => handleAiAssist('tone_formal')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">আনুষ্ঠানিক</button>
+                  <button onClick={() => handleAiAssist('tone_casual')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">বন্ধুসুলভ</button>
                 </div>
               )}
           </div>
