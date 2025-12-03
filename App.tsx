@@ -20,7 +20,7 @@ import {
 } from './services/firebaseService';
 import { DEMO_ARTICLES } from './demoData';
 
-// Default config if fetch fails or first load
+// Default config used as fallback
 const INITIAL_CONFIG: SiteConfig = {
   siteName: "SaadWrites",
   tagline: "শব্দ যেখানে কথা বলে",
@@ -41,7 +41,21 @@ export default function App() {
   const [view, setView] = useState<ViewState>(ViewState.HOME);
   const [articles, setArticles] = useState<Article[]>([]);
   const [isLoadingArticles, setIsLoadingArticles] = useState(true);
-  const [siteConfig, setSiteConfig] = useState<SiteConfig>(INITIAL_CONFIG);
+  
+  // Initialize from localStorage immediately to prevent flash of default content
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('saadwrites_site_config');
+      if (saved) {
+        try {
+          return { ...INITIAL_CONFIG, ...JSON.parse(saved) };
+        } catch (e) {
+          return INITIAL_CONFIG;
+        }
+      }
+    }
+    return INITIAL_CONFIG;
+  });
   
   const [activeArticle, setActiveArticle] = useState<Article | null>(null);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
@@ -281,8 +295,13 @@ export default function App() {
       setEditingArticle(null);
       addToast('লেখা ক্লাউডে সেভ হয়েছে', 'success');
       
+      // Clear drafts
       localStorage.removeItem('saadwrites_draft_content');
       localStorage.removeItem('saadwrites_draft_title');
+      if (articleData.id) {
+        localStorage.removeItem(`saadwrites_edit_draft_${articleData.id}`);
+      }
+
       setView(ViewState.HOME);
     } catch (e) {
       console.error(e);

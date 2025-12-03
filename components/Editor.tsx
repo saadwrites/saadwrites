@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Save, Sparkles, Image as ImageIcon, X, Bold, Italic, List, FolderOpen, FileText, Clock, Type } from 'lucide-react';
 import { generateWritingAssistance } from '../services/geminiService';
@@ -39,13 +40,29 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
   // Restore or Init Data
   useEffect(() => {
     if (initialArticle) {
-      setTitle(initialArticle.title);
-      setContent(initialArticle.content);
+      // Check if we have a saved draft for this specific article edit
+      const draftKey = `saadwrites_edit_draft_${initialArticle.id}`;
+      const savedDraft = localStorage.getItem(draftKey);
+      
+      if (savedDraft) {
+        try {
+          const draft = JSON.parse(savedDraft);
+          setTitle(draft.title || initialArticle.title);
+          setContent(draft.content || initialArticle.content);
+        } catch(e) {
+          setTitle(initialArticle.title);
+          setContent(initialArticle.content);
+        }
+      } else {
+        setTitle(initialArticle.title);
+        setContent(initialArticle.content);
+      }
+      
       setTags(initialArticle.tags.join(', '));
       setCategory(initialArticle.category);
       setCoverImage(initialArticle.coverImage || null);
     } else {
-      // Auto-restore draft from session
+      // Auto-restore new article draft
       const savedTitle = localStorage.getItem('saadwrites_draft_title');
       const savedContent = localStorage.getItem('saadwrites_draft_content');
       if (savedTitle) setTitle(savedTitle);
@@ -55,9 +72,15 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
 
   // Auto-save to localStorage
   useEffect(() => {
-    if (!initialArticle) {
-      localStorage.setItem('saadwrites_draft_title', title);
-      localStorage.setItem('saadwrites_draft_content', content);
+    if (initialArticle) {
+       // Save edit draft
+       const draftKey = `saadwrites_edit_draft_${initialArticle.id}`;
+       const draftData = { title, content };
+       localStorage.setItem(draftKey, JSON.stringify(draftData));
+    } else {
+       // Save new article draft
+       localStorage.setItem('saadwrites_draft_title', title);
+       localStorage.setItem('saadwrites_draft_content', content);
     }
   }, [title, content, initialArticle]);
 
