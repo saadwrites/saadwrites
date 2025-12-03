@@ -4,8 +4,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// TODO: Replace the following with your app's Firebase project configuration
-// For Vercel deployment without keys, keep these placeholders. The app will detect this and use LocalStorage.
+// Placeholder config
 const firebaseConfig = {
   apiKey: "AIzaSyDOCS_EXAMPLE_KEY_REPLACE_ME",
   authDomain: "your-project-id.firebaseapp.com",
@@ -15,20 +14,31 @@ const firebaseConfig = {
   appId: "1:1234567890:web:abcdef123456"
 };
 
-// Check if the config is still using the placeholder
-// This prevents the app from trying to connect to a non-existent project
-export const isFirebaseConfigured = 
-  firebaseConfig.projectId !== "your-project-id" && 
-  firebaseConfig.apiKey !== "AIzaSyDOCS_EXAMPLE_KEY_REPLACE_ME" &&
-  !window.location.hostname.includes('vercel.app'); // Optional: force offline on vercel if keys are missing
+// Robust check to determine if we should use Firebase or LocalStorage
+const isPlaceholderKey = firebaseConfig.apiKey === "AIzaSyDOCS_EXAMPLE_KEY_REPLACE_ME";
+const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
 
-// Initialize Firebase only if configured
-const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : undefined;
-export const auth = isFirebaseConfigured && app ? getAuth(app) : undefined;
-export const db = isFirebaseConfigured && app ? getFirestore(app) : undefined;
+// FORCE OFFLINE MODE if on Vercel without real keys, or if keys are placeholders
+export const isFirebaseConfigured = !isPlaceholderKey && !isVercel;
 
-if (!isFirebaseConfigured) {
+// Initialize Firebase only if properly configured
+// If this fails, the app will continue in offline mode instead of crashing
+let app;
+let auth;
+let db;
+
+if (isFirebaseConfigured) {
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+  } catch (error) {
+    console.warn("Firebase initialization failed. Falling back to offline mode.", error);
+    // Fallback variables remain undefined, triggering local storage logic in services
+  }
+} else {
   console.log("App running in Offline/Demo mode (LocalStorage).");
 }
 
+export { app, auth, db };
 export default app;

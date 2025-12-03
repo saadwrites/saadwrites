@@ -1,8 +1,26 @@
+
 import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.API_KEY;
+// Safely check for API key in various environments (Vite, Next.js, standard Node)
+const getApiKey = () => {
+  try {
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
+      // @ts-ignore
+      return import.meta.env.VITE_API_KEY;
+    }
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+      return process.env.API_KEY;
+    }
+  } catch (e) {
+    return undefined;
+  }
+  return undefined;
+};
 
-// Only initialize if key exists, otherwise keep it undefined
+const apiKey = getApiKey();
+
+// Only initialize if key exists
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export const generateWritingAssistance = async (
@@ -10,16 +28,16 @@ export const generateWritingAssistance = async (
   currentText: string,
   taskType: string
 ): Promise<string> => {
-  // Check if API Key is missing
+  // Graceful fallback if no key is present
   if (!apiKey || !ai) {
-    console.warn("Gemini API Key is missing. AI features are disabled.");
+    console.log("Gemini API Key missing. Using mock response.");
     
-    // Return mock responses so the app doesn't crash
+    // Return context-aware mock responses
     if (taskType === 'ideas') {
-      return `[ডেমো মোড: API Key নেই]\n\n১. ${prompt} নিয়ে একটি ছোটগল্প লিখুন।\n২. এটি নিয়ে একটি স্মৃতিচারণমূলক প্রবন্ধ লিখুন।\n৩. চরিত্রের মনস্তাত্ত্বিক বিশ্লেষণ করুন।`;
+      return `[অফলাইন মোড]\n\n১. ${prompt || 'বর্তমান বিষয়'} নিয়ে একটি ছোটগল্প লিখুন।\n২. এটি নিয়ে একটি স্মৃতিচারণমূলক প্রবন্ধ লিখুন।\n৩. চরিত্রের মনস্তাত্ত্বিক বিশ্লেষণ করুন।\n\n(এআই ফিচার চালু করতে API Key যুক্ত করুন)`;
     }
     
-    return "[অটো-রেসপন্স]: বর্তমানে এআই অ্যাসিস্ট্যান্ট সুবিধাটি বন্ধ আছে কারণ কোনো API Key কনফিগার করা হয়নি। আপনি নিজেই লেখাটি চালিয়ে যান।";
+    return "[অটো-রেসপন্স]: বর্তমানে এআই অ্যাসিস্ট্যান্ট সুবিধাটি বন্ধ আছে (অফলাইন মোড)। আপনি নিশ্চিন্তে লেখা চালিয়ে যান।";
   }
 
   const modelId = 'gemini-2.5-flash';
@@ -33,6 +51,8 @@ export const generateWritingAssistance = async (
 
   let fullPrompt = "";
 
+  // ... (Prompt generation logic remains the same, omitting for brevity as it was correct) ...
+  // Re-implementing the switch case to ensure full file integrity
   switch (taskType) {
     case 'grammar':
       fullPrompt = `Please correct the grammar and improve the flow of the following text without changing the meaning:\n\n${currentText}`;
@@ -86,6 +106,6 @@ export const generateWritingAssistance = async (
     return response.text || "দুঃখিত, কোনো উত্তর পাওয়া যায়নি।";
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "এআই সেবা সংযোগে সমস্যা হচ্ছে অথবা কোটা শেষ হয়ে গেছে।";
+    return "এআই সেবা সংযোগে সমস্যা হচ্ছে।";
   }
 };

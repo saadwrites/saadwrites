@@ -68,7 +68,7 @@ export const saveSiteConfig = async (config: SiteConfig) => {
     try {
       await setDoc(doc(db, "settings", "general"), config, { merge: true });
     } catch (error) {
-      console.error("Config save failed, fallback local", error);
+      console.warn("Config save failed (Network/Auth), fallback local", error);
       localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(config));
     }
   } else {
@@ -77,6 +77,11 @@ export const saveSiteConfig = async (config: SiteConfig) => {
 };
 
 export const subscribeToConfig = (callback: (config: SiteConfig) => void) => {
+  const loadLocal = () => {
+     const local = localStorage.getItem(STORAGE_KEY_CONFIG);
+     callback(local ? JSON.parse(local) : DEFAULT_CONFIG);
+  };
+
   if (isFirebaseConfigured && db) {
     try {
        return onSnapshot(doc(db, "settings", "general"), (doc) => {
@@ -86,18 +91,15 @@ export const subscribeToConfig = (callback: (config: SiteConfig) => void) => {
            callback(DEFAULT_CONFIG);
          }
        }, (err) => {
-         // Fallback
-         const local = localStorage.getItem(STORAGE_KEY_CONFIG);
-         callback(local ? JSON.parse(local) : DEFAULT_CONFIG);
+         console.warn("Firestore config sync failed, using local.");
+         loadLocal();
        });
     } catch (e) {
-      const local = localStorage.getItem(STORAGE_KEY_CONFIG);
-      callback(local ? JSON.parse(local) : DEFAULT_CONFIG);
+      loadLocal();
       return () => {};
     }
   } else {
-    const local = localStorage.getItem(STORAGE_KEY_CONFIG);
-    callback(local ? JSON.parse(local) : DEFAULT_CONFIG);
+    loadLocal();
     return () => {};
   }
 };
@@ -110,7 +112,7 @@ export const subscribeToNewsletter = async (email: string) => {
     try {
       await addDoc(collection(db, "newsletter_subscribers"), subData);
     } catch (error) {
-      console.error("Newsletter save failed, fallback local", error);
+      console.warn("Newsletter save failed, fallback local", error);
       saveLocalSubscriber(subData);
     }
   } else {
@@ -125,16 +127,18 @@ const saveLocalSubscriber = (sub: { email: string, subscribedAt: number }) => {
 };
 
 export const getSubscribers = async () => {
+  const getLocal = () => JSON.parse(localStorage.getItem(STORAGE_KEY_SUBSCRIBERS) || '[]');
+
   if (isFirebaseConfigured && db) {
     try {
       const q = query(collection(db, "newsletter_subscribers"), orderBy("subscribedAt", "desc"));
       const snapshot = await getDocs(q);
       return snapshot.docs.map(doc => doc.data() as { email: string, subscribedAt: number });
     } catch (e) {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY_SUBSCRIBERS) || '[]');
+      return getLocal();
     }
   } else {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY_SUBSCRIBERS) || '[]');
+    return getLocal();
   }
 };
 
@@ -165,7 +169,7 @@ export const loginWithGoogle = async (): Promise<User> => {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    // Force reload/notify mechanism would go here, but app relies on subscription
+    // Notify
     window.dispatchEvent(new Event('storage'));
     
     return mockUser;
