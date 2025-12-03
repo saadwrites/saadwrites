@@ -1,15 +1,25 @@
 import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+const apiKey = process.env.API_KEY;
+
+// Only initialize if key exists, otherwise keep it undefined
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export const generateWritingAssistance = async (
   prompt: string,
   currentText: string,
   taskType: string
 ): Promise<string> => {
-  if (!apiKey) {
-    throw new Error("API Key is missing.");
+  // Check if API Key is missing
+  if (!apiKey || !ai) {
+    console.warn("Gemini API Key is missing. AI features are disabled.");
+    
+    // Return mock responses so the app doesn't crash
+    if (taskType === 'ideas') {
+      return `[ডেমো মোড: API Key নেই]\n\n১. ${prompt} নিয়ে একটি ছোটগল্প লিখুন।\n২. এটি নিয়ে একটি স্মৃতিচারণমূলক প্রবন্ধ লিখুন।\n৩. চরিত্রের মনস্তাত্ত্বিক বিশ্লেষণ করুন।`;
+    }
+    
+    return "[অটো-রেসপন্স]: বর্তমানে এআই অ্যাসিস্ট্যান্ট সুবিধাটি বন্ধ আছে কারণ কোনো API Key কনফিগার করা হয়নি। আপনি নিজেই লেখাটি চালিয়ে যান।";
   }
 
   const modelId = 'gemini-2.5-flash';
@@ -76,6 +86,6 @@ export const generateWritingAssistance = async (
     return response.text || "দুঃখিত, কোনো উত্তর পাওয়া যায়নি।";
   } catch (error) {
     console.error("Gemini API Error:", error);
-    throw new Error("এআই সেবা সংযোগে সমস্যা হচ্ছে।");
+    return "এআই সেবা সংযোগে সমস্যা হচ্ছে অথবা কোটা শেষ হয়ে গেছে।";
   }
 };
