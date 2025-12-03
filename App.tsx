@@ -113,10 +113,12 @@ export default function App() {
       setIsLoadingArticles(false);
 
       // Check if we need to seed any missing demo articles
-      // This ensures new demo stories appear even if the list is not empty
-      const missingDemos = DEMO_ARTICLES.filter(demo => 
-        !fetchedArticles.some(existing => existing.id === demo.id)
-      );
+      // CRITICAL FIX: Only seed if the user hasn't explicitly deleted it before
+      const missingDemos = DEMO_ARTICLES.filter(demo => {
+        const isDeleted = localStorage.getItem(`saadwrites_deleted_${demo.id}`);
+        const exists = fetchedArticles.some(existing => existing.id === demo.id);
+        return !exists && !isDeleted;
+      });
 
       if (missingDemos.length > 0) {
         console.log(`Seeding ${missingDemos.length} missing demo articles...`);
@@ -126,7 +128,8 @@ export default function App() {
         if (missingDemos.length === DEMO_ARTICLES.length) {
            addToast('স্বাগতম! ডেমো লেখা পোস্ট হয়েছে', 'success');
         } else {
-           addToast('নতুন লেখা যুক্ত হয়েছে', 'success');
+           // Silently add individual missing ones to avoid spamming toasts on reload
+           // addToast('নতুন লেখা যুক্ত হয়েছে', 'success');
         }
       }
 
@@ -301,6 +304,10 @@ export default function App() {
   const handleDeleteArticle = async (articleId: string) => {
     try {
       await deleteArticleFromFirebase(articleId);
+      
+      // CRITICAL FIX: Mark as deleted in localStorage so auto-seeder ignores it
+      localStorage.setItem(`saadwrites_deleted_${articleId}`, 'true');
+      
       setActiveArticle(null);
       setView(ViewState.HOME);
       addToast('লেখা মুছে ফেলা হয়েছে', 'success');
