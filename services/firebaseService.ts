@@ -55,6 +55,7 @@ const saveLocalArticle = (article: Article) => {
 };
 
 const deleteLocalArticle = (id: string) => {
+  console.log("Deleting article locally:", id);
   const articles = getLocalArticles().filter(a => a.id !== id);
   localStorage.setItem(STORAGE_KEY_ARTICLES, JSON.stringify(articles));
   notifySubscribers();
@@ -221,8 +222,7 @@ export const subscribeToArticles = (callback: (articles: Article[]) => void) => 
         const articles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Article));
         callback(articles);
       }, (error) => {
-         console.warn("Firestore access failed (likely permission/network). Switching to offline mode.");
-         // Fallback to local
+         console.warn("Firestore access failed. Switching to offline mode.");
          subscribers.push(callback);
          callback(getLocalArticles());
       });
@@ -261,6 +261,8 @@ export const deleteArticleFromFirebase = async (id: string) => {
   if (isFirebaseConfigured && db) {
     try {
         await deleteDoc(doc(db, "articles", id));
+        // Also ensure local is clean in case of hybrid states
+        deleteLocalArticle(id); 
     } catch (error) {
         console.error("Firestore delete error, falling back to local:", error);
         deleteLocalArticle(id);

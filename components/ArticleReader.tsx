@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Share2, MessageCircle, User as UserIcon, Send, Settings, Edit2, Trash2, Facebook, Twitter, Linkedin, Copy, ArrowRight, Eye } from 'lucide-react';
+import { ArrowLeft, Share2, Settings, Edit2, Trash2, Facebook, Twitter, Copy, ArrowRight, Eye, Send, Check, X } from 'lucide-react';
 import { Article, ToastType, User } from '../types';
 
 interface ArticleReaderProps {
@@ -34,12 +35,35 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
   const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg' | 'xl'>('lg');
   const [fontFamily, setFontFamily] = useState<'serif' | 'kalpurush' | 'bornomala' | 'hind'>('kalpurush');
   const [showSettings, setShowSettings] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [readingProgress, setReadingProgress] = useState(0);
+  const [hasLiked, setHasLiked] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
       setCommentAuthor(currentUser.name);
     }
   }, [currentUser]);
+
+  // Update Page Title for SEO
+  useEffect(() => {
+    document.title = `${article.title} - SaadWrites`;
+    return () => {
+      document.title = 'SaadWrites - ব্যক্তিগত ব্লগ';
+    };
+  }, [article.title]);
+
+  // Scroll Progress
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const progress = (window.scrollY / totalHeight) * 100;
+      setReadingProgress(progress);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString('bn-BD', {
@@ -73,8 +97,11 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
   };
 
   const handleDeleteClick = () => {
-    if (window.confirm('আপনি কি নিশ্চিত যে আপনি এই লেখাটি মুছে ফেলতে চান?')) {
+    if (deleteConfirm) {
       onDelete(article.id);
+    } else {
+      setDeleteConfirm(true);
+      setTimeout(() => setDeleteConfirm(false), 3000); // Reset after 3s
     }
   };
 
@@ -83,6 +110,27 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
     navigator.clipboard.writeText(shareUrl);
     onShowToast('লিংক কপি করা হয়েছে', 'success');
   };
+
+  const toggleSpeech = () => {
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+    } else {
+      const utterance = new SpeechSynthesisUtterance(article.title + "। " + article.content);
+      utterance.lang = 'bn-BD';
+      utterance.rate = 0.9;
+      utterance.onend = () => setIsPlaying(false);
+      window.speechSynthesis.speak(utterance);
+      setIsPlaying(true);
+    }
+  };
+
+  // Stop speech when unmounting
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
 
   const getFontSizeClass = () => {
     switch (fontSize) {
@@ -133,7 +181,10 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
     .slice(0, 3);
 
   return (
-    <article className="animate-slide-up pb-20">
+    <article className="animate-slide-up pb-20 relative">
+      {/* Reading Progress Bar */}
+      <div className="fixed top-0 left-0 h-1 bg-gold z-[100] transition-all duration-300" style={{ width: `${readingProgress}%` }}></div>
+
       {/* Action Toolbar */}
       <div className="flex justify-between items-center mb-12 sticky top-0 bg-cream/90 dark:bg-[#0f0f0f]/90 backdrop-blur-md z-40 py-4 border-b border-stone-200/50 dark:border-stone-800">
         <button onClick={onBack} className="flex items-center gap-2 text-stone-500 hover:text-charcoal dark:hover:text-white transition-colors group">
@@ -142,10 +193,33 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
         </button>
 
         <div className="flex items-center gap-2">
+          <button 
+            onClick={toggleSpeech}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${isPlaying ? 'bg-gold text-white' : 'bg-stone-100 dark:bg-stone-800 text-stone-500 hover:bg-stone-200 dark:hover:bg-stone-700'}`}
+          >
+             {isPlaying ? 'থামুন' : 'শুনুন'}
+          </button>
+
           {isAdmin && (
             <>
               <button onClick={() => onEdit(article)} className="p-2.5 text-stone-500 hover:text-blue-600 transition-colors rounded-full hover:bg-white dark:hover:bg-stone-800" title="এডিট করুন"><Edit2 className="w-4 h-4" /></button>
-              <button onClick={handleDeleteClick} className="p-2.5 text-stone-500 hover:text-red-600 transition-colors rounded-full hover:bg-white dark:hover:bg-stone-800" title="ডিলিট করুন"><Trash2 className="w-4 h-4" /></button>
+              
+              {/* Delete Button with Confirmation State */}
+              <button 
+                onClick={handleDeleteClick} 
+                className={`flex items-center gap-2 px-2.5 py-2.5 rounded-full transition-all duration-300 ${deleteConfirm ? 'bg-red-600 text-white w-auto px-4' : 'text-stone-500 hover:text-red-600 hover:bg-white dark:hover:bg-stone-800'}`}
+                title={deleteConfirm ? "নিশ্চিত করুন" : "ডিলিট করুন"}
+              >
+                {deleteConfirm ? (
+                  <>
+                    <span className="text-xs font-bold">নিশ্চিত?</span>
+                    <Trash2 className="w-4 h-4" />
+                  </>
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+              </button>
+              
               <div className="w-px h-5 bg-stone-300 dark:bg-stone-700 mx-1"></div>
             </>
           )}
