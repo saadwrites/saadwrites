@@ -51,6 +51,15 @@ export const generateWritingAssistance = async (
     case 'style_descriptive':
       fullPrompt = `Rewrite the following text to be more descriptive, adding vivid imagery, sensory details, and metaphors:\n\n${currentText}`;
       break;
+    case 'genre_mystery':
+      fullPrompt = `Rewrite or enhance the following text to fit the Mystery/Thriller genre. Add suspense, intrigue, and atmospheric tension:\n\n${currentText}`;
+      break;
+    case 'genre_romance':
+      fullPrompt = `Rewrite or enhance the following text to fit the Romance genre. Focus on deep emotions, sensory details, and intimacy:\n\n${currentText}`;
+      break;
+    case 'genre_horror':
+      fullPrompt = `Rewrite or enhance the following text to fit the Horror genre. Build a sense of dread, use unsettling imagery, and fear:\n\n${currentText}`;
+      break;
     default:
       fullPrompt = `${prompt}\n\nContext text:\n${currentText}`;
   }

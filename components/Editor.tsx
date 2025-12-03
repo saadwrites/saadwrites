@@ -284,6 +284,11 @@ export const Editor: React.FC<EditorProps> = ({ initialArticle, onSave, onCancel
                   <button onClick={() => handleAiAssist('tone_literary')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">সাহিত্যিক</button>
                   <button onClick={() => handleAiAssist('tone_formal')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">আনুষ্ঠানিক</button>
                   <button onClick={() => handleAiAssist('tone_casual')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">বন্ধুসুলভ</button>
+                  
+                  <div className="px-5 py-2 text-[10px] font-bold uppercase tracking-widest text-stone-400 bg-stone-50 dark:bg-stone-900/50 border-t border-stone-100 dark:border-stone-800">ধরণ (Genre)</div>
+                  <button onClick={() => handleAiAssist('genre_mystery')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">রহস্য (Mystery)</button>
+                  <button onClick={() => handleAiAssist('genre_romance')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">রোমান্টিক (Romance)</button>
+                  <button onClick={() => handleAiAssist('genre_horror')} className="w-full text-left px-5 py-3 hover:bg-cream dark:hover:bg-stone-800 text-sm font-medium text-charcoal dark:text-stone-300 transition-colors">ভৌতিক (Horror)</button>
                 </div>
               )}
           </div>

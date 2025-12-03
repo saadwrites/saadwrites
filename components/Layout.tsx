@@ -3,6 +3,47 @@ import React, { useState, useEffect, useRef } from 'react';
 import { PenTool, BookOpen, Mail, Download, Upload, User as UserIcon, Menu, X, PanelLeftClose, Eye, CheckCircle, AlertCircle, Info, Lock, Unlock, BarChart2, LogIn, LogOut, Image as ImageIcon, Database } from 'lucide-react';
 import { ViewState, Toast, User, SiteConfig } from '../types';
 import { EditableText, EditableImage } from './Editable';
+import { Logo } from './Logo';
+
+interface NavButtonProps {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  subLabel: string;
+}
+
+const NavButton: React.FC<NavButtonProps> = ({ active, onClick, icon, label, subLabel }) => (
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-300 group ${
+      active 
+        ? 'bg-charcoal text-white shadow-lg dark:bg-stone-100 dark:text-charcoal' 
+        : 'text-stone-500 dark:text-stone-400 hover:bg-stone-100/50 dark:hover:bg-stone-800/30 hover:text-charcoal dark:hover:text-white'
+    }`}
+  >
+    <span className={`p-2 rounded-md transition-colors ${
+      active 
+        ? 'bg-white/10 text-white dark:bg-charcoal/10 dark:text-charcoal' 
+        : 'bg-stone-100/50 dark:bg-stone-900/50 text-stone-400 group-hover:text-charcoal dark:group-hover:text-white group-hover:bg-white dark:group-hover:bg-stone-800'
+    }`}>
+      {icon}
+    </span>
+    <div className="text-left">
+      <span className={`block text-sm font-bold font-kalpurush tracking-wide ${active ? '' : 'group-hover:text-charcoal dark:group-hover:text-white'}`}>
+        {label}
+      </span>
+      <span className={`text-[10px] font-medium uppercase tracking-wider ${
+        active ? 'text-white/60 dark:text-charcoal/60' : 'text-stone-400 group-hover:text-stone-500 dark:group-hover:text-stone-300'
+      }`}>
+        {subLabel}
+      </span>
+    </div>
+    {active && (
+      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
+    )}
+  </button>
+);
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -134,33 +175,50 @@ export const Layout: React.FC<LayoutProps> = ({
             <div className="animate-fade-in w-full">
               {/* Flexible Logo + Text Layout */}
               <div className="flex flex-col gap-4">
-                 {/* Logo Container - Only occupies space if present or admin */}
-                 {(config.logoUrl || isAdmin) && (
-                   <div className="w-16 h-16 self-start">
-                      <EditableImage 
-                        src={config.logoUrl} 
-                        onSave={(url) => updateConfig({ logoUrl: url })} 
+                 {/* Logo Container - Use custom Logo if available, else allow upload in admin */}
+                 <div className="flex items-center gap-3">
+                   {config.logoUrl ? (
+                     <div className="w-12 h-12">
+                        <EditableImage 
+                          src={config.logoUrl} 
+                          onSave={(url) => updateConfig({ logoUrl: url })} 
+                          isAdmin={isAdmin}
+                          className="w-full h-full object-contain"
+                        />
+                     </div>
+                   ) : (
+                     // Default SVG Logo
+                     <div className="relative group">
+                       <Logo size="md" showText={false} />
+                       {isAdmin && (
+                         <div className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <EditableImage 
+                              src="" 
+                              onSave={(url) => updateConfig({ logoUrl: url })} 
+                              isAdmin={true}
+                              className="w-full h-full opacity-0" // invisible overlay to trigger upload
+                              fallbackIcon={<div/>} // no icon needed, covers the logo
+                            />
+                         </div>
+                       )}
+                     </div>
+                   )}
+                   
+                   {/* Site Name and Tagline */}
+                   <div>
+                      <EditableText 
+                          value={config.siteName} 
+                          onSave={(val) => updateConfig({ siteName: val })} 
+                          isAdmin={isAdmin}
+                          className="text-2xl font-kalpurush font-bold text-charcoal dark:text-stone-100 tracking-tight block"
+                      />
+                      <EditableText 
+                        value={config.tagline} 
+                        onSave={(val) => updateConfig({ tagline: val })} 
                         isAdmin={isAdmin}
-                        className="w-full h-full object-contain"
-                        fallbackIcon={<ImageIcon className="w-6 h-6 text-stone-300"/>}
+                        className="text-[10px] uppercase tracking-[0.25em] text-gold/80 mt-1 font-medium block"
                       />
                    </div>
-                 )}
-                 
-                 {/* Site Name and Tagline - Always visible */}
-                 <div>
-                    <EditableText 
-                        value={config.siteName} 
-                        onSave={(val) => updateConfig({ siteName: val })} 
-                        isAdmin={isAdmin}
-                        className="text-3xl font-kalpurush font-bold text-charcoal dark:text-stone-100 tracking-tight block"
-                    />
-                    <EditableText 
-                      value={config.tagline} 
-                      onSave={(val) => updateConfig({ tagline: val })} 
-                      isAdmin={isAdmin}
-                      className="text-[10px] uppercase tracking-[0.25em] text-gold/80 mt-1 font-medium block"
-                    />
                  </div>
               </div>
             </div>
@@ -317,32 +375,11 @@ export const Layout: React.FC<LayoutProps> = ({
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 h-full overflow-y-auto bg-cream dark:bg-[#0f0f0f] transition-colors duration-[800ms] ease-[cubic-bezier(0.4,0,0.2,1)] w-full min-w-0 relative scroll-smooth">
-        <div className="max-w-6xl mx-auto px-6 md:px-16 py-24 md:py-24 animate-fade-in">
-          {children}
+      <main className="flex-1 relative overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-stone-200 dark:scrollbar-thumb-stone-800">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-20 min-h-full">
+           {children}
         </div>
       </main>
     </div>
   );
 };
-
-const NavButton = ({ active, onClick, icon, label, subLabel }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, subLabel?: string }) => (
-  <button
-    onClick={onClick}
-    className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-500 ease-out group border border-transparent ${
-      active
-        ? 'bg-stone-100/60 dark:bg-stone-800/40 text-charcoal dark:text-white border-stone-200/30 dark:border-stone-700/30 shadow-soft'
-        : 'text-stone-500 dark:text-stone-400 hover:text-charcoal dark:hover:text-white hover:bg-stone-50/50 dark:hover:bg-stone-800/20'
-    }`}
-  >
-    <span className={`p-2 rounded-md transition-colors duration-500 ${active ? 'bg-gold/90 text-white' : 'bg-stone-100/50 dark:bg-stone-900/50 group-hover:bg-stone-200 dark:group-hover:bg-stone-800'}`}>
-      {icon}
-    </span>
-    <div className="text-left">
-      <span className={`block text-sm font-bold font-kalpurush tracking-wide transition-colors duration-500 ${active ? 'text-charcoal dark:text-white' : 'text-stone-600 dark:text-stone-300 group-hover:text-charcoal dark:group-hover:text-white'}`}>
-        {label}
-      </span>
-      {subLabel && <span className="text-[10px] text-stone-400 dark:text-stone-600 group-hover:text-stone-500 dark:group-hover:text-stone-500 transition-colors duration-500">{subLabel}</span>}
-    </div>
-  </button>
-);

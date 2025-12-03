@@ -10,8 +10,8 @@ export const Logo: React.FC<LogoProps> = ({ className = "", showText = true, siz
   const sizeClasses = {
     sm: "w-8 h-8",
     md: "w-12 h-12",
-    lg: "w-32 h-32", 
-    xl: "w-40 h-40"
+    lg: "w-24 h-24", 
+    xl: "w-32 h-32"
   };
 
   const textSizes = {
@@ -22,53 +22,45 @@ export const Logo: React.FC<LogoProps> = ({ className = "", showText = true, siz
   };
 
   return (
-    <div className={`flex items-center gap-4 ${className}`}>
+    <div className={`flex items-center gap-3 ${className}`}>
       <div className={`${sizeClasses[size]} relative shrink-0`}>
         <svg 
           viewBox="0 0 100 100" 
-          className="w-full h-full" 
+          className="w-full h-full drop-shadow-sm" 
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
-            <linearGradient id="goldGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-              <stop offset="0%" style={{ stopColor: '#78350f', stopOpacity: 1 }} />
-              <stop offset="40%" style={{ stopColor: '#b45309', stopOpacity: 1 }} />
-              <stop offset="80%" style={{ stopColor: '#fbbf24', stopOpacity: 1 }} />
-              <stop offset="100%" style={{ stopColor: '#fcd34d', stopOpacity: 1 }} />
+            <linearGradient id="siteGoldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style={{ stopColor: '#b45309', stopOpacity: 1 }} /> {/* Dark Gold */}
+              <stop offset="50%" style={{ stopColor: '#d97706', stopOpacity: 1 }} /> {/* Medium Gold */}
+              <stop offset="100%" style={{ stopColor: '#fbbf24', stopOpacity: 1 }} /> {/* Light Gold */}
             </linearGradient>
+            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
           </defs>
           
           {/* 
-            Premium Artistic Feather
-            Matches reference: Curved spine, distinct deep notches on the bottom edge, sharp quill.
+             Sleek Feather Quill Design
+             - Sharp quill tip (calamus)
+             - Elegant curve
+             - Distinct gaps/notches to look like a feather, not a leaf
           */}
-          <g transform="translate(10, 10) scale(0.8)">
+          <g transform="translate(15, 10) scale(0.75) rotate(-15, 50, 50)">
+            {/* The main vane (feather part) */}
             <path 
-              d="
-                M 25,95 
-                C 35,85 45,70 50,60
-                C 50,60 48,62 46,64
-                C 42,68 35,75 35,75
-                C 30,65 25,45 40,20
-                C 55,5 75,5 85,5
-                C 85,5 80,15 75,25
-                C 70,35 68,40 68,40
-                L 60,42
-                L 65,48
-                C 60,58 55,62 55,62
-                L 48,65
-                L 52,70
-                C 45,80 35,90 25,95
-                Z
-              " 
-              fill="url(#goldGradient)" 
+              d="M50,95 C50,95 48,70 20,45 C10,35 15,20 15,20 C35,25 45,40 50,55 C55,40 75,10 90,5 C90,5 85,25 70,40 C65,45 60,50 60,50 L65,55 C65,55 58,60 55,62 L60,68 C60,68 52,75 50,95 Z" 
+              fill="url(#siteGoldGradient)" 
+              stroke="#78350f" 
+              strokeWidth="0.5"
             />
-            {/* Central Spine for definition */}
+            {/* The Rachis (Central Shaft) - White/Light for contrast */}
             <path 
-              d="M 25,95 C 45,75 60,45 85,5" 
+              d="M50,95 Q50,60 90,5" 
               fill="none" 
-              stroke="rgba(255,255,255,0.3)" 
-              strokeWidth="1"
+              stroke="rgba(255,255,255,0.6)" 
+              strokeWidth="2" 
               strokeLinecap="round"
             />
           </g>
@@ -81,7 +73,7 @@ export const Logo: React.FC<LogoProps> = ({ className = "", showText = true, siz
             SaadWrites
           </h1>
           {(size === 'lg' || size === 'xl') && (
-            <span className="text-xs md:text-sm text-gold font-serif uppercase tracking-[0.4em] ml-1 mt-3 opacity-90 border-t border-gold/30 pt-2 inline-block">
+            <span className="text-xs md:text-sm text-gold font-serif uppercase tracking-[0.4em] ml-1 mt-2 opacity-90 block">
               Thought & Ink
             </span>
           )}
