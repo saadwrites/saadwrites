@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Share2, Settings, Edit2, Trash2, Facebook, Twitter, Copy, ArrowRight, Eye, Send, Check, X } from 'lucide-react';
+import { ArrowLeft, Share2, Settings, Edit2, Trash2, Facebook, Twitter, Copy, ArrowRight, Eye, Send, Check, X, Heart, Play, Pause } from 'lucide-react';
 import { Article, ToastType, User } from '../types';
 
 interface ArticleReaderProps {
@@ -15,6 +14,7 @@ interface ArticleReaderProps {
   onShowToast: (msg: string, type: ToastType) => void;
   isAdmin: boolean;
   currentUser: User | null;
+  onLike?: (articleId: string) => void;
 }
 
 export const ArticleReader: React.FC<ArticleReaderProps> = ({ 
@@ -28,7 +28,8 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
   onTagClick,
   onShowToast,
   isAdmin,
-  currentUser
+  currentUser,
+  onLike
 }) => {
   const [commentAuthor, setCommentAuthor] = useState('');
   const [commentContent, setCommentContent] = useState('');
@@ -36,6 +37,7 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
   const [fontFamily, setFontFamily] = useState<'serif' | 'kalpurush' | 'bornomala' | 'hind'>('kalpurush');
   const [showSettings, setShowSettings] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [readingProgress, setReadingProgress] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
@@ -53,6 +55,13 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
       document.title = 'SaadWrites - ব্যক্তিগত ব্লগ';
     };
   }, [article.title]);
+
+  // Check local like status
+  useEffect(() => {
+    const liked = localStorage.getItem(`saadwrites_liked_${article.id}`);
+    if (liked) setHasLiked(true);
+    else setHasLiked(false);
+  }, [article.id]);
 
   // Scroll Progress
   useEffect(() => {
@@ -98,10 +107,19 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
 
   const handleDeleteClick = () => {
     if (deleteConfirm) {
+      setIsDeleting(true);
       onDelete(article.id);
     } else {
       setDeleteConfirm(true);
       setTimeout(() => setDeleteConfirm(false), 3000); // Reset after 3s
+    }
+  };
+
+  const handleLike = () => {
+    if (!hasLiked && onLike) {
+      onLike(article.id);
+      setHasLiked(true);
+      localStorage.setItem(`saadwrites_liked_${article.id}`, 'true');
     }
   };
 
@@ -185,6 +203,19 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
       {/* Reading Progress Bar */}
       <div className="fixed top-0 left-0 h-1 bg-gold z-[100] transition-all duration-300" style={{ width: `${readingProgress}%` }}></div>
 
+      {/* Floating Like Button */}
+      {onLike && (
+        <button
+          onClick={handleLike}
+          disabled={hasLiked}
+          className={`fixed bottom-10 right-10 md:right-20 z-50 p-4 rounded-full shadow-2xl transition-all duration-500 hover:scale-110 ${hasLiked ? 'bg-red-500 text-white' : 'bg-white dark:bg-stone-800 text-stone-400 hover:text-red-500'}`}
+          title="ভালো লেগেছে"
+        >
+          <Heart className={`w-6 h-6 ${hasLiked ? 'fill-current' : ''}`} />
+          {hasLiked && <span className="absolute -top-2 -right-2 w-3 h-3 bg-gold rounded-full animate-ping"></span>}
+        </button>
+      )}
+
       {/* Action Toolbar */}
       <div className="flex justify-between items-center mb-12 sticky top-0 bg-cream/90 dark:bg-[#0f0f0f]/90 backdrop-blur-md z-40 py-4 border-b border-stone-200/50 dark:border-stone-800">
         <button onClick={onBack} className="flex items-center gap-2 text-stone-500 hover:text-charcoal dark:hover:text-white transition-colors group">
@@ -197,6 +228,7 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
             onClick={toggleSpeech}
             className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${isPlaying ? 'bg-gold text-white' : 'bg-stone-100 dark:bg-stone-800 text-stone-500 hover:bg-stone-200 dark:hover:bg-stone-700'}`}
           >
+             {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
              {isPlaying ? 'থামুন' : 'শুনুন'}
           </button>
 
@@ -207,10 +239,13 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
               {/* Delete Button with Confirmation State */}
               <button 
                 onClick={handleDeleteClick} 
+                disabled={isDeleting}
                 className={`flex items-center gap-2 px-2.5 py-2.5 rounded-full transition-all duration-300 ${deleteConfirm ? 'bg-red-600 text-white w-auto px-4' : 'text-stone-500 hover:text-red-600 hover:bg-white dark:hover:bg-stone-800'}`}
                 title={deleteConfirm ? "নিশ্চিত করুন" : "ডিলিট করুন"}
               >
-                {deleteConfirm ? (
+                {isDeleting ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                ) : deleteConfirm ? (
                   <>
                     <span className="text-xs font-bold">নিশ্চিত?</span>
                     <Trash2 className="w-4 h-4" />
@@ -266,6 +301,12 @@ export const ArticleReader: React.FC<ArticleReaderProps> = ({
               <span className="w-1 h-1 rounded-full bg-gold"></span>
               <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {article.views} বার পঠিত</span>
             </>
+          )}
+          {article.likes !== undefined && (
+             <>
+               <span className="w-1 h-1 rounded-full bg-gold"></span>
+               <span className="flex items-center gap-1 text-red-500"><Heart className="w-3 h-3 fill-current" /> {article.likes}</span>
+             </>
           )}
           {article.status === 'draft' && <span className="px-2 py-0.5 bg-stone-200 dark:bg-stone-800 text-stone-500 rounded text-[10px] ml-2">খসড়া</span>}
         </div>

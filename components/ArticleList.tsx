@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Article, ToastType, SiteConfig } from '../types';
 import { Search, Sun, Moon, Sparkles, Feather, FileText, Eye, Mail, Send, Image as ImageIcon, ArrowRight } from 'lucide-react';

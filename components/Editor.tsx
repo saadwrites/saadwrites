@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Save, Sparkles, Image as ImageIcon, X, Bold, Italic, List, FolderOpen, FileText, Clock, Type } from 'lucide-react';
 import { generateWritingAssistance } from '../services/geminiService';

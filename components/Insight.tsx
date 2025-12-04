@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Article } from '../types';
 import { BarChart, Users, FileText, MessageCircle, TrendingUp, Eye, PenTool, Mail } from 'lucide-react';

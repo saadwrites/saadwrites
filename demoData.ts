@@ -1,4 +1,3 @@
-
 import { Article } from './types';
 
 export const DEMO_ARTICLES: Article[] = [

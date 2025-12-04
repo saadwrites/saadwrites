@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, BookOpen, Coffee, Camera } from 'lucide-react';
 import { SiteConfig } from '../types';

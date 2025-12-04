@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Edit3, Check, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 

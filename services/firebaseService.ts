@@ -1,4 +1,3 @@
-
 import { auth, db, isFirebaseConfigured } from '../firebaseConfig';
 import { signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, getDoc, addDoc, getDocs } from "firebase/firestore";

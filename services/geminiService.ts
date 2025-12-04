@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 
 // Safely check for API key in various environments (Vite, Next.js, standard Node)
@@ -51,8 +50,6 @@ export const generateWritingAssistance = async (
 
   let fullPrompt = "";
 
-  // ... (Prompt generation logic remains the same, omitting for brevity as it was correct) ...
-  // Re-implementing the switch case to ensure full file integrity
   switch (taskType) {
     case 'grammar':
       fullPrompt = `Please correct the grammar and improve the flow of the following text without changing the meaning:\n\n${currentText}`;

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { PenTool, BookOpen, Mail, Download, Upload, User as UserIcon, Menu, X, PanelLeftClose, Eye, CheckCircle, AlertCircle, Info, Lock, Unlock, BarChart2, LogIn, LogOut, Image as ImageIcon, Database } from 'lucide-react';
 import { ViewState, Toast, User, SiteConfig } from '../types';

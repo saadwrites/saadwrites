@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Layout } from './components/Layout';
 import { Editor } from './components/Editor';
@@ -371,6 +370,21 @@ export default function App() {
     addToast(`#${tag} খোঁজা হচ্ছে`, 'info');
   };
 
+  const handleLikeArticle = async (articleId: string) => {
+    try {
+      const article = articles.find(a => a.id === articleId);
+      if (article) {
+        const newLikes = (article.likes || 0) + 1;
+        await saveArticleToFirebase({ ...article, likes: newLikes });
+        if (activeArticle && activeArticle.id === articleId) {
+          setActiveArticle({ ...activeArticle, likes: newLikes });
+        }
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  };
+
   const renderContent = () => {
     if (isLoadingArticles) {
       return <div className="flex h-screen items-center justify-center text-gold font-kalpurush text-xl animate-pulse">লোড হচ্ছে...</div>;
@@ -408,6 +422,7 @@ export default function App() {
             onShowToast={addToast}
             isAdmin={isAdmin}
             currentUser={currentUser}
+            onLike={handleLikeArticle}
           />
         ) : (
           <div className="text-center p-10">কোনো লেখা পাওয়া যায়নি</div>

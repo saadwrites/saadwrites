@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Send, Mail, User, MessageSquare, Phone, Copy, Check, ExternalLink } from 'lucide-react';
 import { SiteConfig } from '../types';
