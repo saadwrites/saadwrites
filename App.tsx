@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Layout } from './components/Layout';
 import { Editor } from './components/Editor';
@@ -125,8 +126,31 @@ export default function App() {
       setArticles(fetchedArticles);
       setIsLoadingArticles(false);
 
-      // Check if we need to seed any missing demo articles
-      // CRITICAL FIX: Only seed if the user hasn't explicitly deleted it before
+      // --- CLEANUP LOGIC: Force remove "Phoenix from Ashes" if it exists ---
+      const unwantedArticleIds = ['demo-6']; // Add any IDs you want to purge
+      unwantedArticleIds.forEach(id => {
+         const exists = fetchedArticles.find(a => a.id === id);
+         if (exists) {
+           console.log(`Cleaning up unwanted article: ${id}`);
+           deleteArticleFromFirebase(id);
+         }
+      });
+
+      // --- SEEDING LOGIC: Add "Megh O Moddhobitter Upakhyan" if missing ---
+      // We check specifically for the new story ID to ensure it gets added
+      const targetStoryId = 'demo-cloud-story'; 
+      const hasTargetStory = fetchedArticles.some(a => a.id === targetStoryId);
+      const isTargetDeleted = localStorage.getItem(`saadwrites_deleted_${targetStoryId}`);
+
+      if (!hasTargetStory && !isTargetDeleted) {
+         const targetArticle = DEMO_ARTICLES.find(a => a.id === targetStoryId);
+         if (targetArticle) {
+           console.log("Force seeding new story: ", targetArticle.title);
+           saveArticleToFirebase(targetArticle);
+         }
+      }
+
+      // General Demo Seeding
       const missingDemos = DEMO_ARTICLES.filter(demo => {
         const isDeleted = localStorage.getItem(`saadwrites_deleted_${demo.id}`);
         const exists = fetchedArticles.some(existing => existing.id === demo.id);
@@ -134,16 +158,9 @@ export default function App() {
       });
 
       if (missingDemos.length > 0) {
-        console.log(`Seeding ${missingDemos.length} missing demo articles...`);
         missingDemos.forEach(async (article) => {
            await saveArticleToFirebase(article);
         });
-        if (missingDemos.length === DEMO_ARTICLES.length) {
-           addToast('স্বাগতম! ডেমো লেখা পোস্ট হয়েছে', 'success');
-        } else {
-           // Silently add individual missing ones to avoid spamming toasts on reload
-           // addToast('নতুন লেখা যুক্ত হয়েছে', 'success');
-        }
       }
 
       // Data Migration Logic (One time)
@@ -316,8 +333,47 @@ export default function App() {
     
     setActiveArticle({ ...article, views: newViews });
     setView(ViewState.READER);
+    
+    // Update URL with deep link
+    const url = new URL(window.location.href);
+    url.searchParams.set('article', article.id);
+    window.history.pushState({ articleId: article.id }, '', url.toString());
+
     window.scrollTo(0,0);
   };
+
+  // Handle Browser Back Button for Deep Linking
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state?.articleId) {
+        const article = articles.find(a => a.id === event.state.articleId);
+        if (article) {
+          setActiveArticle(article);
+          setView(ViewState.READER);
+        }
+      } else {
+        setView(ViewState.HOME);
+        setActiveArticle(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [articles]);
+
+  // Initial Deep Link Check
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const articleId = params.get('article');
+    if (articleId && articles.length > 0) {
+      const article = articles.find(a => a.id === articleId);
+      if (article) {
+        setActiveArticle(article);
+        setView(ViewState.READER);
+      }
+    }
+  }, [articles]);
+
 
   const handleDeleteArticle = async (articleId: string) => {
     try {
@@ -328,6 +384,12 @@ export default function App() {
       
       setActiveArticle(null);
       setView(ViewState.HOME);
+      
+      // Clean URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('article');
+      window.history.pushState({}, '', url.toString());
+
       addToast('লেখা মুছে ফেলা হয়েছে', 'success');
     } catch (e) {
       addToast('মুছতে সমস্যা হয়েছে', 'error');
@@ -367,6 +429,12 @@ export default function App() {
   const handleTagClick = (tag: string) => {
     setSearchQuery(tag);
     setView(ViewState.HOME);
+    
+    // Clean URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('article');
+    window.history.pushState({}, '', url.toString());
+
     addToast(`#${tag} খোঁজা হচ্ছে`, 'info');
   };
 
@@ -413,7 +481,12 @@ export default function App() {
           <ArticleReader 
             article={activeArticle}
             allArticles={articles}
-            onBack={() => setView(ViewState.HOME)} 
+            onBack={() => {
+              setView(ViewState.HOME);
+              const url = new URL(window.location.href);
+              url.searchParams.delete('article');
+              window.history.pushState({}, '', url.toString());
+            }} 
             onSelectArticle={handleSelectArticle}
             onAddComment={handleAddComment}
             onDelete={handleDeleteArticle}

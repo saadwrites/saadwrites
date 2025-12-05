@@ -21,6 +21,7 @@ export interface Article {
   category: ArticleCategory;
   status: 'published' | 'draft';
   views?: number;
+  likes?: number;
 }
 
 export interface User {
