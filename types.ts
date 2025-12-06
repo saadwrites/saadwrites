@@ -1,3 +1,4 @@
+
 export interface Comment {
   id: string;
   author: string;
@@ -81,4 +82,5 @@ export interface SiteConfig {
   aboutLocation1: string; // Kishoreganj
   aboutLocation2: string; // Noakhali
   aboutTrait: string; // Bhavoghure
+  aboutWebsite?: string; // Portfolio link
 }

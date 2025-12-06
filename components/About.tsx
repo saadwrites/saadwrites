@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, BookOpen, Coffee, Camera } from 'lucide-react';
+import { MapPin, BookOpen, Coffee, Camera, Globe } from 'lucide-react';
 import { SiteConfig } from '../types';
 import { EditableText } from './Editable';
 
@@ -94,6 +95,16 @@ export const About: React.FC<AboutProps> = ({ config, updateConfig, isAdmin }) =
                  <div className="flex items-center gap-2 text-stone-500 text-sm font-bold uppercase tracking-wider">
                    <Coffee className="w-4 h-4 text-gold" /> 
                    <EditableText value={config.aboutTrait} onSave={val => updateConfig({ aboutTrait: val })} isAdmin={isAdmin} />
+                 </div>
+                 <div className="flex items-center gap-2 text-stone-500 text-sm font-bold uppercase tracking-wider">
+                   <Globe className="w-4 h-4 text-gold" /> 
+                   {isAdmin ? (
+                     <EditableText value={config.aboutWebsite || ''} onSave={val => updateConfig({ aboutWebsite: val })} isAdmin={isAdmin} placeholder="Website URL" />
+                   ) : (
+                     <a href={config.aboutWebsite} target="_blank" rel="noopener noreferrer" className="hover:text-gold hover:underline transition-colors">
+                       {config.aboutWebsite || 'Website'}
+                     </a>
+                   )}
                  </div>
               </div>
             </div>

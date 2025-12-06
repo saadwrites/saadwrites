@@ -1,3 +1,4 @@
+
 import { auth, db, isFirebaseConfigured } from '../firebaseConfig';
 import { signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, getDoc, addDoc, getDocs } from "firebase/firestore";
@@ -22,7 +23,8 @@ const DEFAULT_CONFIG: SiteConfig = {
   aboutBio: "আমি আব্দুল্লাহ সাআদ। আমার ধমনীতে কিশোরগঞ্জের পলিমাটির ঘ্রাণ, আর স্মৃতির পাতায় মেঘনা-বিধৌত নোয়াখালীর নোনা বাতাস। জন্ম ও শৈশবের সোনালী দিনগুলো কেটেছে কিশোরগঞ্জের মায়াবী পরিবেশে। পরবর্তীতে বেড়ে ওঠা এবং বিদ্যার্জনের পাঠ চুকিয়েছি নোয়াখালীর ব্যস্ত জনপদে। স্বভাবে আমি কিছুটা ভবঘুরে, আর খানিকটা হেয়ালি। ধরাবাঁধা জীবনের ছক কষতে আমার ভালো লাগে না; বরং অজানাকে জানার, অচেনাকে চেনার নেশায় আমি খুঁজে ফিরি জীবনের ভিন্ন অর্থ। আমার লেখায় উঠে আসে এই ভবঘুরে জীবনের গল্প, প্রকৃতির প্রেম আর মানুষের মনের অব্যক্ত কথা।",
   aboutLocation1: "কিশোরগঞ্জ",
   aboutLocation2: "নোয়াখালী",
-  aboutTrait: "ভবঘুরে"
+  aboutTrait: "ভবঘুরে",
+  aboutWebsite: "https://about.me/abdullah-saad"
 };
 
 // Simple event system for local updates
