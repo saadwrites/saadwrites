@@ -84,3 +84,12 @@ export interface SiteConfig {
   aboutTrait: string; // Bhavoghure
   aboutWebsite?: string; // Portfolio link
 }
+
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  createdAt: number;
+  read: boolean;
+}

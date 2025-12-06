@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { Send, Mail, User, MessageSquare, Phone, Copy, Check, ExternalLink } from 'lucide-react';
 import { SiteConfig } from '../types';
 import { EditableText } from './Editable';
+import { sendContactMessage } from '../services/firebaseService';
 
 interface ContactProps {
   config: SiteConfig;
@@ -18,13 +20,22 @@ export const Contact: React.FC<ContactProps> = ({ config, updateConfig, isAdmin 
   const [status, setStatus] = useState<'idle' | 'sending' | 'success'>('idle');
   const [copied, setCopied] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('sending');
-    setTimeout(() => {
+    try {
+      await sendContactMessage({
+        name: formData.name,
+        email: formData.email,
+        message: formData.message
+      });
       setStatus('success');
       setFormData({ name: '', email: '', message: '' });
-    }, 1500);
+    } catch (error) {
+      console.error("Failed to send message", error);
+      setStatus('idle');
+      alert('বার্তা পাঠাতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+    }
   };
 
   const copyToClipboard = (text: string, type: string) => {

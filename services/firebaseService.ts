@@ -2,13 +2,14 @@
 import { auth, db, isFirebaseConfigured } from '../firebaseConfig';
 import { signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, getDoc, addDoc, getDocs } from "firebase/firestore";
-import { Article, User, SiteConfig } from '../types';
+import { Article, User, SiteConfig, ContactMessage } from '../types';
 
 // --- LocalStorage Helpers for Fallback Mode ---
 const STORAGE_KEY_ARTICLES = 'saadwrites_articles';
 const STORAGE_KEY_USER = 'saadwrites_user';
 const STORAGE_KEY_CONFIG = 'saadwrites_site_config';
 const STORAGE_KEY_SUBSCRIBERS = 'saadwrites_subscribers';
+const STORAGE_KEY_MESSAGES = 'saadwrites_contact_messages';
 
 const DEFAULT_CONFIG: SiteConfig = {
   siteName: "SaadWrites",
@@ -143,6 +144,48 @@ export const getSubscribers = async () => {
   }
 };
 
+// --- Contact Message Operations ---
+
+export const sendContactMessage = async (message: Omit<ContactMessage, 'id' | 'createdAt' | 'read'>) => {
+  const msgData: ContactMessage = {
+    ...message,
+    id: Date.now().toString(),
+    createdAt: Date.now(),
+    read: false
+  };
+
+  if (isFirebaseConfigured && db) {
+    try {
+      await addDoc(collection(db, "contact_messages"), msgData);
+    } catch (error) {
+      saveLocalMessage(msgData);
+    }
+  } else {
+    saveLocalMessage(msgData);
+  }
+};
+
+const saveLocalMessage = (msg: ContactMessage) => {
+  const msgs = JSON.parse(localStorage.getItem(STORAGE_KEY_MESSAGES) || '[]');
+  msgs.unshift(msg);
+  localStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(msgs));
+};
+
+export const getContactMessages = async (): Promise<ContactMessage[]> => {
+  const getLocal = () => JSON.parse(localStorage.getItem(STORAGE_KEY_MESSAGES) || '[]');
+
+  if (isFirebaseConfigured && db) {
+    try {
+      const q = query(collection(db, "contact_messages"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContactMessage));
+    } catch (e) {
+      return getLocal();
+    }
+  } else {
+    return getLocal();
+  }
+};
 
 // --- Auth Operations ---
 

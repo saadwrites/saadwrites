@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
-import { Article } from '../types';
-import { BarChart, Users, FileText, MessageCircle, TrendingUp, Eye, PenTool, Mail } from 'lucide-react';
-import { getSubscribers } from '../services/firebaseService';
+import { Article, ContactMessage } from '../types';
+import { BarChart, Users, FileText, MessageCircle, TrendingUp, Eye, PenTool, Mail, Inbox } from 'lucide-react';
+import { getSubscribers, getContactMessages } from '../services/firebaseService';
 
 interface InsightProps {
   articles: Article[];
@@ -20,13 +21,17 @@ export const Insight: React.FC<InsightProps> = ({ articles, totalVisits }) => {
 
   // Subscribers state
   const [subscribers, setSubscribers] = useState<{email: string, subscribedAt: number}[]>([]);
+  // Messages state
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
 
   useEffect(() => {
-    const fetchSubscribers = async () => {
-      const data = await getSubscribers();
-      setSubscribers(data);
+    const fetchData = async () => {
+      const subs = await getSubscribers();
+      setSubscribers(subs);
+      const msgs = await getContactMessages();
+      setMessages(msgs);
     };
-    fetchSubscribers();
+    fetchData();
   }, []);
 
   // Sort by views for popular list
@@ -35,7 +40,7 @@ export const Insight: React.FC<InsightProps> = ({ articles, totalVisits }) => {
     .slice(0, 5);
 
   return (
-    <div className="max-w-5xl mx-auto animate-fade-in space-y-12 pb-16">
+    <div className="max-w-6xl mx-auto animate-fade-in space-y-12 pb-16">
       <div className="space-y-4 mb-8">
         <div className="flex items-center gap-2 text-gold">
            <TrendingUp className="w-5 h-5" />
@@ -145,6 +150,37 @@ export const Insight: React.FC<InsightProps> = ({ articles, totalVisits }) => {
           </div>
         </div>
       </div>
+
+      {/* Messages Inbox Section */}
+      <div className="bg-white dark:bg-[#161413] rounded-sm shadow-xl border border-stone-100 dark:border-stone-800 overflow-hidden">
+        <div className="p-8 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center">
+          <h3 className="text-2xl font-kalpurush font-bold text-charcoal dark:text-stone-100">মেসেজ ইনবক্স ({messages.length})</h3>
+          <Inbox className="w-5 h-5 text-stone-400" />
+        </div>
+        <div className="divide-y divide-stone-100 dark:divide-stone-800 max-h-[500px] overflow-y-auto">
+           {messages.length > 0 ? (
+              <div className="grid grid-cols-1">
+                {messages.map((msg) => (
+                  <div key={msg.id} className="p-6 hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors group">
+                     <div className="flex justify-between items-start mb-2">
+                        <div>
+                           <h4 className="font-bold text-lg text-charcoal dark:text-stone-200">{msg.name}</h4>
+                           <p className="text-sm text-gold">{msg.email}</p>
+                        </div>
+                        <span className="text-xs text-stone-400 font-medium">{new Date(msg.createdAt).toLocaleDateString('bn-BD')} {new Date(msg.createdAt).toLocaleTimeString('bn-BD')}</span>
+                     </div>
+                     <p className="text-stone-600 dark:text-stone-400 font-serif bg-stone-50 dark:bg-stone-900 p-4 rounded-md text-sm leading-relaxed">
+                        {msg.message}
+                     </p>
+                  </div>
+                ))}
+              </div>
+           ) : (
+              <div className="p-10 text-center text-stone-400 font-serif italic">কোনো বার্তা নেই</div>
+           )}
+        </div>
+      </div>
+
     </div>
   );
 };
